@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import { join } from 'node:path';
 import { Agent } from './agent';
+import { initLog } from './log';
 import { loadPlatform } from './platform';
 import { selfTest } from './self-test';
 
@@ -19,6 +20,7 @@ if (process.argv.includes('--self-test')) {
 function startAgent(): void {
   // A development build keeps its settings and History apart from the installed app.
   if (!app.isPackaged) app.setPath('userData', join(app.getPath('appData'), 'Counter Pay Dev'));
+  initLog();
 
   if (!app.requestSingleInstanceLock()) {
     app.quit();

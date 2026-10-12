@@ -272,7 +272,10 @@
       "restoreFailed": "Couldn't restore: {{error}}",
       "localPort": "Display server port",
       "lanPort": "Wi-Fi display port",
-      "portHint": "Takes effect after Counter Pay restarts."
+      "portHint": "Takes effect after Counter Pay restarts.",
+      "logs": "Log file",
+      "logsHint": "If something goes wrong, the log file shows what happened. Attach it when reporting a problem.",
+      "openLogs": "Open log folder"
     },
     "payee": {
       "drop": "Drop a photo or screenshot of your standee QR",

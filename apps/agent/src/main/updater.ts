@@ -45,7 +45,10 @@ export class Updater {
     autoUpdater.on('download-progress', (progress) =>
       this.set({ ...this.state, status: 'downloading', percent: Math.round(progress.percent) }),
     );
-    autoUpdater.on('update-downloaded', (info) => this.set({ status: 'ready', version: info.version }));
+    autoUpdater.on('update-downloaded', (info) => {
+      console.log(`[updater] v${info.version} downloaded; installs on quit or in quiet hours`);
+      this.set({ status: 'ready', version: info.version });
+    });
     autoUpdater.on('error', (error) => {
       // A failed check (offline shop PC) is normal; keep a ready update if there is one.
       if (this.state.status !== 'ready') this.set({ status: 'error', error: error.message, checkedAt: Date.now() });
@@ -70,6 +73,7 @@ export class Updater {
   /** Quits and runs the installer silently, then starts Counter Pay again. */
   install(): boolean {
     if (this.state.status !== 'ready') return false;
+    console.log(`[updater] installing v${this.state.version} now`);
     autoUpdater.quitAndInstall(true, true);
     return true;
   }

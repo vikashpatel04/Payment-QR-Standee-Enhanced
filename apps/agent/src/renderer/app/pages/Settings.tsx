@@ -262,6 +262,11 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
             </button>
           </div>
         </Setting>
+        <Setting name={t('app.settings.logs')} hint={t('app.settings.logsHint')}>
+          <button type="button" className={ui.button} onClick={() => api.app.openLogs()}>
+            {t('app.settings.openLogs')}
+          </button>
+        </Setting>
         {notice && <div className={ui.small}>{notice}</div>}
       </section>
     </div>

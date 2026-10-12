@@ -161,6 +161,8 @@ export interface CounterPayApi {
     /** Copies an image into the shop's content folder and returns the path displays load it from. */
     pickImage(): Promise<string | null>;
     backupConfig(): Promise<{ saved: boolean; path?: string }>;
+    /** Opens the folder with counter-pay.log, for reporting a problem. */
+    openLogs(): void;
     restoreConfig(): Promise<{ restored: boolean; error?: string }>;
     updates: {
       check(): Promise<UpdateState>;
@@ -202,6 +204,7 @@ export const IPC = {
   pickLogo: 'app:pick-logo',
   pickImage: 'app:pick-image',
   backupConfig: 'app:backup-config',
+  openLogs: 'app:open-logs',
   restoreConfig: 'app:restore-config',
   updateCheck: 'update:check',
   updateInstall: 'update:install',

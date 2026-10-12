@@ -18,7 +18,7 @@ import {
   UpiError,
 } from '@counterpay/core';
 import type { DriverStatus } from '@counterpay/drivers';
-import { app, dialog, ipcMain, type IpcMainEvent, type IpcMainInvokeEvent, powerMonitor } from 'electron';
+import { app, dialog, ipcMain, type IpcMainEvent, type IpcMainInvokeEvent, powerMonitor, shell } from 'electron';
 import { randomBytes } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
@@ -38,6 +38,7 @@ import { ElectronWindowHost, listMonitors } from './display-windows';
 import { DisplayManager, type ShowOutcome } from './displays';
 import { HistoryDb } from './history';
 import { t } from './i18n';
+import { logDir } from './log';
 import { userDir } from './paths';
 import { displayPageDir } from './paths';
 import type { Platform } from './platform';
@@ -233,18 +234,24 @@ export class Agent {
     this.main.show();
   }
 
+  /** Shuts down in order. Each step runs even if an earlier one failed, and History closes last. */
   async stop(): Promise<void> {
     if (this.quitting) return;
     this.quitting = true;
+    console.log('[agent] quitting');
     if (this.housekeeping) clearInterval(this.housekeeping);
-    this.updater.stop();
-    this.shortcuts.dispose();
-    this.machine.dispose();
-    await this.displays.dispose();
-    this.windowHost.closeAll();
-    await Promise.all([this.localServer.stop(), this.lanServer.stop()]);
-    this.tray?.dispose();
-    this.history.close();
+    if (this.snapshotTimer) clearTimeout(this.snapshotTimer);
+    this.snapshotTimer = null;
+    this.safely('updater stop', () => this.updater.stop());
+    this.safely('shortcuts stop', () => this.shortcuts.dispose());
+    this.safely('scene stop', () => this.machine.dispose());
+    await this.displays.dispose().catch((error) => console.error('[agent] displays stop failed', error));
+    this.safely('display windows close', () => this.windowHost.closeAll());
+    await Promise.all([this.localServer.stop(), this.lanServer.stop()]).catch((error) =>
+      console.error('[agent] servers stop failed', error),
+    );
+    this.safely('tray remove', () => this.tray?.dispose());
+    this.safely('history close', () => this.history.close());
   }
 
   // ---------- Showing and clearing ----------
@@ -523,10 +530,12 @@ export class Agent {
   }
 
   private pushSnapshot(): void {
-    if (!this.main.isOpen || this.snapshotTimer) return;
+    // While quitting, History may already be closed: the window is going away anyway.
+    if (this.quitting || !this.main.isOpen || this.snapshotTimer) return;
     this.snapshotTimer = setTimeout(() => {
       this.snapshotTimer = null;
-      this.main.send(IPC.snapshotPush, this.snapshot());
+      if (this.quitting) return;
+      this.safely('window refresh', () => this.main.send(IPC.snapshotPush, this.snapshot()));
     }, 100);
   }
 
@@ -618,6 +627,7 @@ export class Agent {
       }
     });
 
+    on(IPC.openLogs, () => void shell.openPath(logDir()));
     handle(IPC.updateCheck, () => this.updater.check());
     handle(IPC.updateInstall, () => this.installUpdate());
     handle(IPC.whatsNewDismiss, () => {
