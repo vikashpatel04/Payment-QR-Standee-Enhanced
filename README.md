@@ -48,7 +48,7 @@ Windows won't let a normal app give focus back to an elevated window. If focus d
 1. Task Scheduler → **Create Task**. Name it *Counter Pay*.
 2. **General:** tick *Run with highest privileges*.
 3. **Triggers:** *At log on* (your user).
-4. **Actions:** *Start a program* → `%LOCALAPPDATA%\Programs\Counter Pay\Counter Pay.exe`, arguments `--hidden`.
+4. **Actions:** *Start a program* → `%LOCALAPPDATA%\Programs\@counterpayagent\Counter Pay.exe`, arguments `--hidden`.
 5. Turn off **Start at login** in Counter Pay's Settings, so it doesn't start twice.
 
 ## Develop
@@ -63,6 +63,8 @@ pnpm dev           # display page (watch) + the app with hot reload
 pnpm dist          # Windows installer in apps/agent/release/
 ```
 
+GitHub Actions runs the type checks and tests on every push and pull request, and builds and publishes releases from version tags (see [docs/RELEASING.md](docs/RELEASING.md)).
+
 A development build keeps its settings and History in `%APPDATA%\Counter Pay Dev`, apart from an installed copy.
 
 ### Repository layout
@@ -74,7 +76,7 @@ packages/plugins/    point-of-sale trigger interface; a read-only "bill saved" w
 apps/agent/          the Electron app: tray agent, popup, toast, main window, local server, History
 apps/display/        the customer display page, used by every browser-based display
 locales/             app text (English) and customer display text (English + 10 Indian languages)
-docs/                CONTRIBUTING.md, SECURITY.md, RELEASING.md
+docs/                CONTRIBUTING.md, SECURITY.md, RELEASING.md, releases/ (release notes)
 ```
 
 ## Privacy and safety

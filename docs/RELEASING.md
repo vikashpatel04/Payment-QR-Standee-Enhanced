@@ -1,6 +1,23 @@
 # Releasing
 
-Installed copies of Counter Pay update themselves from the GitHub Releases of the repository named in `apps/agent/package.json` (`repository`). A fork changes that one field to ship its own updates. Each release must carry three files, exactly as the build wrote them:
+Installed copies of Counter Pay update themselves from the GitHub Releases of the repository named in `apps/agent/package.json` (`repository`). A fork changes that one field to ship its own updates.
+
+Releases are built and published by GitHub Actions (`.github/workflows/release.yml`) on GitHub's Windows machines, so nobody's PC is needed.
+
+## Steps
+
+1. Bump `version` in `apps/agent/package.json` (`0.1.2`, `0.2.0`…). Never reuse a version: installed apps only move up.
+2. Write the release notes in `docs/releases/v<version>.md` (optional: without it, GitHub generates notes from the commits).
+3. Commit, push, then tag and push the tag:
+
+   ```bash
+   git commit -am "Release 0.1.2"
+   git push
+   git tag v0.1.2
+   git push origin v0.1.2
+   ```
+
+The **Release** workflow then type-checks, tests, builds the installer, runs the packaged app's `--self-test`, and publishes a release with the three files installed copies need:
 
 | File | Why |
 | --- | --- |
@@ -8,32 +25,9 @@ Installed copies of Counter Pay update themselves from the GitHub Releases of th
 | `counter-pay-setup-<version>.exe.blockmap` | Lets updates download only the changed parts |
 | `latest.yml` | The version and SHA-512 the app checks before installing |
 
-## Steps
+It refuses to publish if the tag doesn't match the version in `apps/agent/package.json`. A version like `0.2.0-beta.1` is published as a pre-release, which only shops on the Beta channel get.
 
-1. Bump `version` in `apps/agent/package.json` (`0.1.1`, `0.2.0`…). Never reuse a version: installed apps only move up.
-2. Check and build:
-
-   ```bash
-   pnpm test
-   pnpm typecheck
-   pnpm dist
-   ```
-
-   The files land in `apps/agent/release/<version>/`. A quick check of the packaged app:
-
-   ```bash
-   "apps/agent/release/<version>/win-unpacked/Counter Pay.exe" --self-test
-   ```
-
-3. Commit, tag and publish:
-
-   ```bash
-   git commit -am "Release <version>"
-   git push
-   gh release create v<version> apps/agent/release/<version>/counter-pay-setup-<version>.exe apps/agent/release/<version>/counter-pay-setup-<version>.exe.blockmap apps/agent/release/<version>/latest.yml --title "Counter Pay <version>" --notes-file notes.md
-   ```
-
-   For the Beta channel, use a version like `0.2.0-beta.1` and add `--prerelease`. Only shops that chose Beta in Settings get it.
+**Dry run:** Actions → Release → **Run workflow** builds and self-tests without publishing, and keeps the installer as a downloadable artifact for 7 days.
 
 ## What happens on the shop PC
 

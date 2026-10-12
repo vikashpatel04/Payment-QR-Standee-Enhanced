@@ -1,0 +1,95 @@
+name: Release
+
+# Push a tag like v0.1.2 (matching apps/agent/package.json) to build the Windows installer and
+# publish it as a GitHub release; installed copies pick it up as an automatic update.
+# Run it by hand ("Run workflow") for a dry run: it builds and self-tests but publishes nothing.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Build and publish (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      # electron-builder downloads the Electron it packages; the dev binary isn't needed.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Read the version
+        id: version
+        run: |
+          version=$(node -p "require('./apps/agent/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match apps/agent/package.json version $version"
+            exit 1
+          fi
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - name: Build the installer
+        run: |
+          pnpm --filter @counterpay/display build
+          pnpm --filter @counterpay/agent build
+          cd apps/agent
+          npx electron-builder --win --x64 --publish never
+
+      - name: Self-test the packaged app
+        run: |
+          report=$("apps/agent/release/${{ steps.version.outputs.version }}/win-unpacked/Counter Pay.exe" --self-test)
+          echo "$report"
+          echo "$report" | grep -q '"ok":true'
+
+      - name: Keep the build (dry run)
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: counter-pay-${{ steps.version.outputs.version }}
+          path: |
+            apps/agent/release/${{ steps.version.outputs.version }}/counter-pay-setup-*.exe
+            apps/agent/release/${{ steps.version.outputs.version }}/counter-pay-setup-*.exe.blockmap
+            apps/agent/release/${{ steps.version.outputs.version }}/latest.yml
+          retention-days: 7
+
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          dir="apps/agent/release/$VERSION"
+          notes="docs/releases/v$VERSION.md"
+          args=(--title "Counter Pay $VERSION")
+          if [ -f "$notes" ]; then args+=(--notes-file "$notes"); else args+=(--generate-notes); fi
+          # A version like 0.2.0-beta.1 goes to the Beta channel only.
+          if [[ "$VERSION" == *-* ]]; then args+=(--prerelease); else args+=(--latest); fi
+          gh release create "v$VERSION" \
+            "$dir/counter-pay-setup-$VERSION.exe" \
+            "$dir/counter-pay-setup-$VERSION.exe.blockmap" \
+            "$dir/latest.yml" \
+            --verify-tag "${args[@]}"
