@@ -37,11 +37,11 @@ import { secrets, ConfigStore } from './config-store';
 import { ElectronWindowHost, listMonitors } from './display-windows';
 import { DisplayManager, type ShowOutcome } from './displays';
 import { HistoryDb } from './history';
-import { setAppLanguage, t } from './i18n';
+import { t } from './i18n';
 import { userDir } from './paths';
 import { displayPageDir } from './paths';
 import type { Platform } from './platform';
-import { LAN_PORT, LanServer, LOCAL_PORT, LocalServer } from './server';
+import { LanServer, LocalServer } from './server';
 import { Shortcuts } from './shortcuts';
 import { StateStore } from './state-store';
 import { AppTray } from './tray';
@@ -97,7 +97,9 @@ export class Agent {
   private toast: ToastWindow | null = null;
   private tray: AppTray | null = null;
   private showing: Promise<ShowOutcome> = Promise.resolve({ acked: [], reach: 'simulatorOnly' });
-  private serverError: string | null = null;
+  private serverError: AppSnapshot['serverError'] = null;
+  /** Read once at launch: a port change applies on the next start. */
+  private readonly ports: { local: number; lan: number };
   private snapshotTimer: NodeJS.Timeout | null = null;
   private housekeeping: NodeJS.Timeout | null = null;
   private quitting = false;
@@ -107,6 +109,8 @@ export class Agent {
 
   constructor(private readonly platform: Platform) {
     mkdirSync(userDir(), { recursive: true });
+    const { localPort, lanPort } = this.config.get().server;
+    this.ports = { local: localPort, lan: lanPort };
     this.history = new HistoryDb(userDir('history.db'));
 
     this.machine = new SceneMachine({
@@ -161,7 +165,6 @@ export class Agent {
 
   async start(options: { hidden: boolean }): Promise<void> {
     const config = this.config.get();
-    setAppLanguage(config.language.app);
     this.tidyHistory();
     this.syncRefCounter();
 
@@ -191,10 +194,10 @@ export class Agent {
     this.config.onChange(({ config: next, previous }) => this.onConfigChange(next, previous));
 
     try {
-      await this.localServer.start(LOCAL_PORT, '127.0.0.1');
+      await this.localServer.start(this.ports.local, '127.0.0.1');
     } catch (error) {
-      this.serverError = `Port ${LOCAL_PORT} is busy: ${(error as Error).message}`;
-      console.error('[agent]', this.serverError);
+      this.serverError = { code: 'localPortBusy', port: this.ports.local };
+      console.error(`[agent] display server could not use port ${this.ports.local}:`, error);
     }
     this.displays.setContent(this.content());
     await this.displays.sync(config.displays);
@@ -279,7 +282,6 @@ export class Agent {
       maxRupees: config.pay.maxRupees,
       reach: this.displays.reach(),
       payeeReady: isPayeeConfigured(config),
-      lang: config.language.app,
     };
     this.popup.open(info);
   }
@@ -339,7 +341,6 @@ export class Agent {
   // ---------- Config, content and displays ----------
 
   private onConfigChange(config: CounterPayConfig, previous: CounterPayConfig): void {
-    setAppLanguage(config.language.app);
     if (JSON.stringify(config.shortcuts) !== JSON.stringify(previous.shortcuts)) this.shortcuts.apply(config.shortcuts);
     this.revokeStaleTokens(config);
     this.displays.setContent(this.content());
@@ -383,18 +384,18 @@ export class Agent {
   private displayUrl(id: string, role: 'display' | 'preview', rotation = 0): string {
     const query = new URLSearchParams({ id, key: this.localKey, role });
     if (rotation) query.set('rotate', String(rotation));
-    return `http://127.0.0.1:${LOCAL_PORT}/display/?${query.toString()}`;
+    return `http://127.0.0.1:${this.ports.local}/display/?${query.toString()}`;
   }
 
   private async updateLan(): Promise<void> {
     const wanted = this.config.get().displays.some((d) => d.enabled && d.driver === 'web');
     try {
-      if (wanted && !this.lanServer.running) await this.lanServer.start(LAN_PORT, '0.0.0.0');
+      if (wanted && !this.lanServer.running) await this.lanServer.start(this.ports.lan, '0.0.0.0');
       if (!wanted && this.lanServer.running) await this.lanServer.stop();
-      if (this.serverError?.startsWith('Wi-Fi')) this.serverError = null;
+      if (this.serverError?.code === 'lanPortBusy') this.serverError = null;
     } catch (error) {
-      this.serverError = `Wi-Fi displays unavailable: port ${LAN_PORT} is busy (${(error as Error).message})`;
-      console.error('[agent]', this.serverError);
+      this.serverError = { code: 'lanPortBusy', port: this.ports.lan };
+      console.error(`[agent] Wi-Fi display server could not use port ${this.ports.lan}:`, error);
     }
     this.pushSnapshot();
   }
@@ -509,8 +510,9 @@ export class Agent {
         completed: Boolean(this.state.get('onboardingCompleted')),
         amountLockTest: this.state.get('amountLockTest') ?? null,
       },
-      lanUrls: this.lanServer.running ? LanServer.urls() : [],
+      lanUrls: this.lanServer.running ? LanServer.urls(this.ports.lan) : [],
       serverError: this.serverError,
+      localBaseUrl: `http://127.0.0.1:${this.ports.local}`,
       monitors: listMonitors(),
       update: this.updater.current,
       whatsNew:
@@ -569,7 +571,7 @@ export class Agent {
     handle(IPC.pickLogo, async () => {
       const result = await dialog.showOpenDialog({
         properties: ['openFile'],
-        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'svg'] }],
+        filters: [{ name: t('app.dialog.images'), extensions: ['png', 'jpg', 'jpeg', 'webp', 'svg'] }],
       });
       const source = result.filePaths[0];
       if (result.canceled || !source) return null;
@@ -583,7 +585,7 @@ export class Agent {
     handle(IPC.pickImage, async () => {
       const result = await dialog.showOpenDialog({
         properties: ['openFile'],
-        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+        filters: [{ name: t('app.dialog.images'), extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
       });
       const source = result.filePaths[0];
       if (result.canceled || !source) return null;

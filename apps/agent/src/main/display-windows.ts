@@ -25,7 +25,7 @@ export function listMonitors(): MonitorInfo[] {
 
 /**
  * Full-screen display windows on secondary monitors. They are never focusable, so
- * they can't take focus from BNeeds, and they never open on the cashier's own screen.
+ * they can't take focus from the billing software, and they never open on the cashier's own screen.
  */
 export class ElectronWindowHost implements WindowHost {
   private readonly windows = new Map<string, BrowserWindow>();

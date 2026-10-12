@@ -1,4 +1,4 @@
-import { formatINR, APP_LANGUAGES } from '@counterpay/core';
+import { formatINR } from '@counterpay/core';
 import type { AppSnapshot, UpdateState } from '@shared/api';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
@@ -33,6 +33,14 @@ function MaxAmount({ value }: { value: number }) {
     if (rupees > 0) updateConfig({ pay: { maxRupees: rupees } });
   });
   return <input className={ui.input} style={{ width: 130 }} inputMode="numeric" {...draft} />;
+}
+
+function Port({ value, commit }: { value: number; commit: (port: number) => void }) {
+  const draft = useDraft(String(value), (next) => {
+    const port = Math.round(Number(next));
+    if (port >= 1024 && port <= 65535) commit(port);
+  });
+  return <input className={ui.input} style={{ width: 100 }} inputMode="numeric" {...draft} />;
 }
 
 function RefPrefix({ value }: { value: string }) {
@@ -196,15 +204,6 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
 
       <section className={ui.card}>
         <h2 className={ui.cardTitle}>{t('app.settings.general')}</h2>
-        <Setting name={t('app.settings.language')}>
-          <select className={ui.select} value={config.language.app} onChange={(e) => updateConfig({ language: { app: e.target.value } })}>
-            {APP_LANGUAGES.map((lang) => (
-              <option key={lang} value={lang}>
-                {t(`app.language.${lang}`)}
-              </option>
-            ))}
-          </select>
-        </Setting>
         <Setting name={t('app.settings.startAtLogin')} hint={t('app.settings.startAtLoginHint')}>
           <Toggle on={config.startAtLogin} label={t('app.settings.startAtLogin')} onChange={(startAtLogin) => updateConfig({ startAtLogin })} />
         </Setting>
@@ -234,6 +233,12 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
               {t(revealToken ? 'app.settings.hide' : 'app.settings.show')}
             </button>
           </div>
+        </Setting>
+        <Setting name={t('app.settings.localPort')} hint={t('app.settings.portHint')}>
+          <Port value={config.server.localPort} commit={(localPort) => updateConfig({ server: { localPort } })} />
+        </Setting>
+        <Setting name={t('app.settings.lanPort')} hint={t('app.settings.portHint')}>
+          <Port value={config.server.lanPort} commit={(lanPort) => updateConfig({ server: { lanPort } })} />
         </Setting>
         <Setting name={t('app.settings.backup')} hint={t('app.settings.backupHint')}>
           <div className={ui.row}>

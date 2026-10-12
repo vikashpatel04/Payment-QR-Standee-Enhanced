@@ -17,7 +17,7 @@ Windows 10/11 x64 and Node.js 22.12+ are required. No C++ toolchain is needed.
 
 1. **No real data.** No real UPI IDs, shop names, credentials or personal data anywhere in the repo. Use `shop@okaxis` and `YOUR SHOP NAME`.
 2. **Domain logic is pure.** Amount parsing, UPI links, scenes, the state machine and the protocol live in `packages/core`, with unit tests and no Electron or Node imports.
-3. **All user-facing text goes through `locales/`.** The app is in English and Tamil; the customer display also has Hindi, Bengali, Marathi, Telugu, Gujarati, Kannada, Malayalam, Punjabi and Odia. To add a display language, add `locales/<code>.json` with the `language` and `display` keys and list the code in `DISPLAY_LANGUAGES` (`packages/core/src/config.ts`); a test checks every key and placeholder.
+3. **All user-facing text goes through `locales/`.** The app is in English; the customer display also has Hindi, Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Punjabi and Odia. To add a display language, add `locales/<code>.json` with the `language` and `display` keys and list the code in `DISPLAY_LANGUAGES` (`packages/core/src/config.ts`); a test checks every key and placeholder.
 4. **Never write to the point-of-sale system.** Plugins only read.
 5. **Ask before adding a dependency** that isn't already in the stack.
 6. **Amounts are integer paise.** Rupee strings exist only where people type or read them.

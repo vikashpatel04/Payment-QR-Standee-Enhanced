@@ -15,8 +15,8 @@ Please don't open a public issue. Use GitHub's **Report a vulnerability** (priva
 | **Someone on the shop Wi-Fi drives the display** | The Wi-Fi server is read-only: it serves the display page and pushes scenes, nothing else. A screen needs the 6-digit pairing code (five tries per minute per address), and a new code signs out every screen paired with the old one. The Wi-Fi server runs only while a phone or tablet display is turned on. |
 | **A local program shows its own QR** | The local server binds to `127.0.0.1`. Display windows present a random key generated at each launch. The Phase 3 API needs a bearer token and is off by default. |
 | **The amount is wrong** | Amounts are integer paise end to end, never floats. A maximum amount (₹1,00,000 by default) catches an extra zero. |
-| **An update restarts the app mid-bill** (Phase 3) | Updates install only on quit or during quiet hours, never while a QR is showing. |
-| **Counter Pay touches the billing software** | It never writes to the billing software's windows or database. The Phase 4 BNeeds watcher uses a read-only login. |
+| **An update restarts the app mid-bill** | Updates install only on quit or during quiet hours, never while a QR is showing. |
+| **Counter Pay touches the billing software** | It never writes to the billing software's windows or database. Phase 4 point-of-sale plugins only read, through a read-only login. |
 
 ## What the repository must never contain
 

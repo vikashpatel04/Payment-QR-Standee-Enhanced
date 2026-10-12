@@ -16,7 +16,8 @@ describe('normalizeConfig', () => {
     expect(config.pay).toEqual({ ttlSeconds: 180, maxRupees: 100000, refPrefix: 'CP' });
     expect(config.thanks.seconds).toBe(10);
     expect(config.ambient.slideSeconds).toBe(8);
-    expect(config.language.display).toEqual(['en', 'ta']);
+    expect(config.language.display).toEqual(['en']);
+    expect(config.server).toEqual({ localPort: 5178, lanPort: 5179 });
     expect(config.history.retentionDays).toBe(365);
     expect(config.api).toEqual({ enabled: false, token: 'token-123' });
   });
@@ -48,6 +49,17 @@ describe('normalizeConfig', () => {
       { id: 'sim', driver: 'simulator', enabled: true, name: 'Simulator' },
       { id: 'monitor-2', driver: 'window', monitor: 2, rotation: 90, enabled: true },
     ]);
+  });
+
+  it('keeps ports in range and never lets the two servers share one', () => {
+    expect(normalizeConfig({ server: { localPort: 80, lanPort: 99999 } }, secrets).server).toEqual({
+      localPort: 1024,
+      lanPort: 65535,
+    });
+    expect(normalizeConfig({ server: { localPort: 6000, lanPort: 6000 } }, secrets).server).toEqual({
+      localPort: 6000,
+      lanPort: 6001,
+    });
   });
 
   it('upper-cases the reference prefix', () => {

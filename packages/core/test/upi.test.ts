@@ -6,20 +6,20 @@ const BASE = 'upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME&mc=5651';
 
 describe('buildUri (spec test vectors)', () => {
   it('keeps the standee parameters and adds tr, am and cu', () => {
-    expect(buildUri(BASE, 114000, 'DT2610120042')).toBe(
-      'upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME&mc=5651&tr=DT2610120042&am=1140.00&cu=INR',
+    expect(buildUri(BASE, 114000, 'CP2610120042')).toBe(
+      'upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME&mc=5651&tr=CP2610120042&am=1140.00&cu=INR',
     );
   });
 
   it('adds mam only when asked', () => {
-    expect(buildUri(BASE, 114000, 'DT2610120042', { addMam: true })).toBe(
-      'upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME&mc=5651&tr=DT2610120042&am=1140.00&cu=INR&mam=1140.00',
+    expect(buildUri(BASE, 114000, 'CP2610120042', { addMam: true })).toBe(
+      'upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME&mc=5651&tr=CP2610120042&am=1140.00&cu=INR&mam=1140.00',
     );
   });
 
   it('replaces am and tr already in the base, never duplicating them', () => {
-    const uri = buildUri(`${BASE}&am=1.00&tr=OLD123&cu=INR`, 114000, 'DT2610120042');
-    expect(uri).toBe('upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME&mc=5651&tr=DT2610120042&am=1140.00&cu=INR');
+    const uri = buildUri(`${BASE}&am=1.00&tr=OLD123&cu=INR`, 114000, 'CP2610120042');
+    expect(uri).toBe('upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME&mc=5651&tr=CP2610120042&am=1140.00&cu=INR');
     expect(uri.match(/[?&]am=/g)).toHaveLength(1);
     expect(uri.match(/[?&]tr=/g)).toHaveLength(1);
   });
@@ -88,7 +88,7 @@ describe('readPayee', () => {
 
 describe('maskVpa', () => {
   it.each([
-    ['dhanalakshmi@okaxis', 'dhanal…@ok…'],
+    ['merchantname@okaxis', 'mercha…@ok…'],
     ['shop@okaxis', 'sh…@ok…'],
     ['a@ybl', 'a@yb…'],
     ['9876543210@ybl', '98765…@yb…'],

@@ -2,8 +2,8 @@ import { toUpiAmount } from './amount';
 import type { EndReason, PaySource } from './state';
 
 /**
- * History records what was shown, not what was paid. The soundpod and the UPI
- * merchant app stay the source of truth for payments.
+ * History records what was shown, not what was paid. The UPI merchant app or
+ * the bank stays the source of truth for payments.
  */
 export interface QrEvent {
   id: number;

@@ -1,6 +1,6 @@
 # Releasing
 
-Installed copies of Counter Pay update themselves from this repository's GitHub Releases. Each release must carry three files, exactly as the build wrote them:
+Installed copies of Counter Pay update themselves from the GitHub Releases of the repository named in `apps/agent/package.json` (`repository`). A fork changes that one field to ship its own updates. Each release must carry three files, exactly as the build wrote them:
 
 | File | Why |
 | --- | --- |

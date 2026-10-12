@@ -8,7 +8,7 @@ Customers who scan an open standee QR type the amount themselves, and short paym
 
 ## Install
 
-1. Download `counter-pay-setup-<version>.exe` from [Releases](https://github.com/vikashpatel04/Payment-QR-Standee-Enhanced/releases/latest) and run it. It installs for your Windows user only, with no admin prompt.
+1. Download `counter-pay-setup-<version>.exe` from [Releases](../../releases/latest) and run it. It installs for your Windows user only, with no admin prompt.
 2. The installer isn't code-signed yet, so Windows may show "Windows protected your PC". Choose **More info → Run anyway**.
 3. First-run setup takes about 3 minutes: import your merchant standee QR, check the shortcuts, pick a display, and do the ₹1 test.
 
@@ -70,10 +70,10 @@ A development build keeps its settings and History in `%APPDATA%\Counter Pay Dev
 ```
 packages/core/       pure TypeScript: amounts, UPI links, references, scenes, state machine, protocol, config
 packages/drivers/    display drivers behind one DisplayDriver interface (simulator, window, web; serial in Phase 2)
-packages/plugins/    point-of-sale trigger interface; BNeeds watcher in Phase 4
+packages/plugins/    point-of-sale trigger interface; a read-only "bill saved" watcher in Phase 4
 apps/agent/          the Electron app: tray agent, popup, toast, main window, local server, History
 apps/display/        the customer display page, used by every browser-based display
-locales/             app text (English, Tamil) and display text (English + 10 Indian languages)
+locales/             app text (English) and customer display text (English + 10 Indian languages)
 docs/                CONTRIBUTING.md, SECURITY.md, RELEASING.md
 ```
 

@@ -4,7 +4,7 @@
  */
 export interface Platform {
   readonly name: string;
-  /** Remembers the window that has focus now (BNeeds), before the popup takes it. */
+  /** Remembers the window that has focus now (usually the billing software), before the popup takes it. */
   captureForeground(): unknown;
   /** Gives focus back to a captured window. Returns false if it is gone or Windows refused. */
   restoreForeground(token: unknown): boolean;

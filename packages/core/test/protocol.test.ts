@@ -17,8 +17,8 @@ const pay: PayScene = {
   shownAt: 0,
   expiresAt: 180_000,
   amountPaise: 114000,
-  ref: 'DT2610120042',
-  uri: 'upi://pay?pa=shop@okaxis&tr=DT2610120042&am=1140.00&cu=INR',
+  ref: 'CP2610120042',
+  uri: 'upi://pay?pa=shop@okaxis&tr=CP2610120042&am=1140.00&cu=INR',
 };
 
 describe('sceneToMessage', () => {
@@ -28,7 +28,7 @@ describe('sceneToMessage', () => {
       t: 'pay',
       seq: 12,
       amt: 114000,
-      ref: 'DT2610120042',
+      ref: 'CP2610120042',
       ttl: 180,
     });
   });
@@ -90,7 +90,7 @@ describe('playlist', () => {
 
 describe('parseDisplayMessage', () => {
   it('accepts the spec examples', () => {
-    expect(parseDisplayMessage({ t: 'hello', fw: '1.0.0', w: 320, h: 480, vpa: 'dhanal…@ok…' })).not.toBeNull();
+    expect(parseDisplayMessage({ t: 'hello', fw: '1.0.0', w: 320, h: 480, vpa: 'mercha…@ok…' })).not.toBeNull();
     expect(parseDisplayMessage({ t: 'ack', seq: 12, scene: 'pay' })).not.toBeNull();
     expect(parseDisplayMessage({ t: 'state', scene: 'ambient', reason: 'expired' })).not.toBeNull();
   });

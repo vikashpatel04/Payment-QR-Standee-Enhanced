@@ -1,6 +1,6 @@
 /**
  * Every QR carries a unique `tr`: a prefix, the date as yyMMdd and a daily counter
- * of at least four digits. `nextRef("2026-10-12", 42, "DT")` is `DT2610120042`.
+ * of at least four digits. `nextRef("2026-10-12", 42, "CP")` is `CP2610120042`.
  */
 
 export const DEFAULT_REF_PREFIX = 'CP';

@@ -10,7 +10,7 @@ export interface ShortcutHandlers {
 type Name = keyof ShortcutHandlers;
 
 /**
- * The two global shortcuts. They work from anywhere, including while BNeeds has focus.
+ * The two global shortcuts. They work from anywhere, including while the billing software has focus.
  * Windows can refuse a key (F12 is reserved for debuggers); that is reported, not hidden.
  */
 export class Shortcuts {

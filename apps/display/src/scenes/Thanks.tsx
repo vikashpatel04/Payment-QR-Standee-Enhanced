@@ -1,5 +1,5 @@
 import type { ContentMessage } from '@counterpay/core';
-import { Bi } from '../Bilingual';
+import { Bi, say } from '../Bilingual';
 import { Qr } from '../Qr';
 import styles from './scenes.module.css';
 
@@ -16,7 +16,7 @@ export function Thanks({ content, langs }: { content: ContentMessage | null; lan
       {content?.rating ? (
         <>
           <div className={styles.smallCard}>
-            <Qr text={content.rating} size={150} label="Google review QR" />
+            <Qr text={content.rating} size={150} label={say(langs[0] ?? 'en', 'a11y.reviewQr')} />
           </div>
           <Bi
             langs={langs}

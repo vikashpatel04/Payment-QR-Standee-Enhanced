@@ -4,7 +4,6 @@ import { motion, useAnimationControls, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../shared/api';
-import { useLanguage } from '../shared/i18n';
 import styles from './popup.module.css';
 
 type Phase = 'hidden' | 'typing' | 'sending' | 'sent' | 'error';
@@ -69,7 +68,6 @@ export function Popup() {
   const [view, setView] = useState<View>(HIDDEN);
   const viewRef = useRef(view);
   viewRef.current = view;
-  useLanguage(view.info?.lang);
 
   const update = useCallback((patch: Partial<View>) => {
     viewRef.current = { ...viewRef.current, ...patch };

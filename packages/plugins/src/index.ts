@@ -1,2 +1,2 @@
-export * from './bneeds';
+export * from './sql-bill-watcher';
 export * from './types';

@@ -3,7 +3,11 @@ import { advanceRef, localDay, nextRef } from '../src/refs';
 
 describe('nextRef', () => {
   it('builds prefix + yyMMdd + 4-digit counter (spec test vector)', () => {
-    expect(nextRef('2026-10-12', 42, 'DT')).toBe('DT2610120042');
+    expect(nextRef('2026-10-12', 42, 'CP')).toBe('CP2610120042');
+  });
+
+  it('takes the shop\'s own prefix', () => {
+    expect(nextRef('2026-10-12', 42, 'AB12')).toBe('AB122610120042');
   });
 
   it('uses the CP prefix by default', () => {

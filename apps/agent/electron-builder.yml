@@ -38,10 +38,9 @@ nsis:
   createDesktopShortcut: false
   createStartMenuShortcut: true
   shortcutName: Counter Pay
-# electron-updater reads new versions from this repository's GitHub Releases. Each release
-# carries the installer, its .blockmap (for differential downloads) and latest.yml (version + SHA-512).
+# electron-updater reads new versions from GitHub Releases of the repository named in
+# package.json's "repository" field, so a fork that changes that field updates from its own releases.
+# Each release carries the installer, its .blockmap (differential downloads) and latest.yml (version + SHA-512).
 publish:
   provider: github
-  owner: vikashpatel04
-  repo: Payment-QR-Standee-Enhanced
   releaseType: release

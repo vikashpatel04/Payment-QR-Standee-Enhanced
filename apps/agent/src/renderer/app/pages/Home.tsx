@@ -62,7 +62,9 @@ export function Home({ snapshot, go }: { snapshot: AppSnapshot; go: (page: Page)
           </div>
         </div>
       )}
-      {snapshot.serverError && <div className={ui.bannerBad}>{snapshot.serverError}</div>}
+      {snapshot.serverError && (
+        <div className={ui.bannerBad}>{t(`app.server.${snapshot.serverError.code}`, { port: snapshot.serverError.port })}</div>
+      )}
       {!snapshot.payee && (
         <div className={ui.bannerBad}>
           {t('app.home.noPayee')}

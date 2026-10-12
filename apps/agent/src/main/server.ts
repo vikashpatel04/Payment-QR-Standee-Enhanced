@@ -6,9 +6,6 @@ import { extname, join, normalize, sep } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { WsLink } from './ws-link';
 
-export const LOCAL_PORT = 5178;
-export const LAN_PORT = 5179;
-
 /** Close code the display page treats as "pair again". */
 const UNAUTHORIZED = 4001;
 const UNKNOWN_DISPLAY = 4004;
@@ -295,7 +292,7 @@ export class LanServer extends BaseServer {
   }
 
   /** What a phone types into its browser. */
-  static urls(port = LAN_PORT): string[] {
+  static urls(port: number): string[] {
     const urls: string[] = [];
     for (const list of Object.values(networkInterfaces())) {
       for (const address of list ?? []) {

@@ -62,7 +62,7 @@ export function Pay({ scene, content, langs, layout, now }: PayProps) {
   const amount = formatINR(scene.amt);
   const qr = scene.uri ? (
     <div className={styles.qrCard}>
-      <Qr text={scene.uri} size={layout === 'landscape' ? 300 : 208} label={`UPI QR for ${amount}`} />
+      <Qr text={scene.uri} size={layout === 'landscape' ? 300 : 208} label={say(langs[0] ?? 'en', 'a11y.payQr', { amount })} />
     </div>
   ) : null;
 

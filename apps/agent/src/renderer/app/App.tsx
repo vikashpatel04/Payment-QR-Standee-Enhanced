@@ -2,7 +2,6 @@ import type { AppSnapshot } from '@shared/api';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../shared/api';
-import { useLanguage } from '../shared/i18n';
 import styles from './app.module.css';
 import { Icon, type IconName, Mark } from './components/Icon';
 import { Keys } from './components/ShortcutRecorder';
@@ -81,7 +80,6 @@ function Sidebar({ page, go, snapshot }: { page: Page; go: (page: Page) => void;
 
 export function App() {
   const snapshot = useSnapshot();
-  useLanguage(snapshot?.config.language.app);
   const [page, setPage] = useState<Page>('home');
 
   if (!snapshot) return <div className={styles.loading} />;

@@ -136,11 +136,11 @@
       "today": "Today",
       "qrsShown": "QRs shown",
       "totalShown": "Total shown",
-      "notPayments": "What was shown, not what was paid. The soundpod and your UPI merchant app stay the record of payments.",
+      "notPayments": "What was shown, not what was paid. Your UPI merchant app or bank stays the record of payments.",
       "shortcuts": "Shortcuts",
       "summon": "Show amount",
       "clear": "Clear QR",
-      "shortcutHint": "They work from any window, including BNeeds. Change them in Settings.",
+      "shortcutHint": "They work from any window, including your billing software. Change them in Settings.",
       "paused": "Shortcuts paused",
       "lockTest": "Amount-lock test",
       "lockTestNone": "Not done yet. First-run setup includes it."
@@ -250,7 +250,6 @@
       "mam": "Add minimum amount (mam)",
       "mamHint": "Only if the amount-lock test showed it helps.",
       "general": "General",
-      "language": "App language",
       "startAtLogin": "Start at login",
       "startAtLoginHint": "Counter Pay waits in the tray, ready for the shortcut.",
       "retention": "Keep History for",
@@ -270,7 +269,10 @@
       "import": "Restore settings…",
       "backedUp": "Saved to {{path}}",
       "restored": "Settings restored.",
-      "restoreFailed": "Couldn't restore: {{error}}"
+      "restoreFailed": "Couldn't restore: {{error}}",
+      "localPort": "Display server port",
+      "lanPort": "Wi-Fi display port",
+      "portHint": "Takes effect after Counter Pay restarts."
     },
     "payee": {
       "drop": "Drop a photo or screenshot of your standee QR",
@@ -301,7 +303,7 @@
         "layoutSwitch": "{{key}} switches keyboard layouts (Tamil input). Pick another key.",
         "windowMenu": "{{key}} opens the window menu. Pick another key.",
         "needsKey": "Press a key, not just Ctrl, Alt or Shift.",
-        "plainKey": "{{key}} on its own would stop that key typing in BNeeds. Use a function key or add Ctrl or Alt."
+        "plainKey": "{{key}} on its own would stop that key typing in your billing software. Use a function key or add Ctrl or Alt."
       }
     },
     "test": {
@@ -313,7 +315,7 @@
       "meaning": {
         "locked": "Customers' apps can't change the amount on your QR.",
         "editable": "The preset amount still stops most casual short-paying. Keep \"goods after full payment\".",
-        "mixed": "Some apps let customers edit it. Watch the soundpod for those."
+        "mixed": "Some apps let customers edit it. Check the amount in your payment alerts for those."
       }
     },
     "setup": {
@@ -321,8 +323,8 @@
       "payeeTitle": "Your payee",
       "payeeLead": "Counter Pay builds every QR from your real merchant standee QR, so money always goes to the same account.",
       "shortcutsTitle": "Your shortcuts",
-      "shortcutsLead": "Press the keys you want. They work while BNeeds has focus.",
-      "shortcutsNote": "Try each one on the BNeeds billing screen first, so nothing collides.",
+      "shortcutsLead": "Press the keys you want. They work while your billing software has focus.",
+      "shortcutsNote": "Try each one in your billing software first, so nothing collides.",
       "displayTitle": "Where customers see the QR",
       "displayLead": "Pick one to start. You can add more later in Displays.",
       "choice": {
@@ -337,7 +339,7 @@
       "testLead": "A ₹1 QR is now on your display. This checks whether customers' apps can change a fixed amount.",
       "testStep1": "Scan it with two or three UPI apps (GPay, PhonePe, Paytm).",
       "testStep2": "Look at the amount before paying. Try to change it.",
-      "testStep3": "Pay ₹1 once and check that the soundpod announces it.",
+      "testStep3": "Pay ₹1 once and check that it reaches your account (merchant app, bank SMS or payment speaker).",
       "testWaiting": "Putting the QR on your display…",
       "question": "Could you change the amount?",
       "answer": {
@@ -345,7 +347,9 @@
         "editable": "Yes, in every app",
         "mixed": "In some apps"
       },
-      "skip": "Skip for now"
+      "skip": "Skip for now",
+      "languageLabel": "Second language on the customer display",
+      "languageHint": "English is always shown. Change this any time in Content."
     },
     "update": {
       "title": "Updates",
@@ -369,6 +373,17 @@
       "whatsNew": "Counter Pay was updated to v{{version}}.",
       "whatsNewLink": "What's new",
       "dismiss": "Dismiss"
+    },
+    "server": {
+      "localPortBusy": "Counter Pay could not start its display server: port {{port}} is in use. Change the port in Settings → Advanced, then restart Counter Pay.",
+      "lanPortBusy": "Phone and tablet displays are unavailable: port {{port}} is in use. Change the Wi-Fi port in Settings → Advanced, then restart Counter Pay."
+    },
+    "dialog": {
+      "images": "Images"
     }
+  },
+  "a11y": {
+    "payQr": "UPI QR for {{amount}}",
+    "reviewQr": "Review QR"
   }
 }

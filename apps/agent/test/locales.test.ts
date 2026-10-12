@@ -1,4 +1,4 @@
-import { APP_LANGUAGES, DISPLAY_LANGUAGES } from '@counterpay/core';
+import { DISPLAY_LANGUAGES } from '@counterpay/core';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -32,16 +32,7 @@ describe('locale files', () => {
     }
   });
 
-  it.each(APP_LANGUAGES.filter((l) => l !== 'en'))('%s translates the whole app, key for key', (lang) => {
-    const strings = flatten(load(lang));
-    expect(Object.keys(strings).sort()).toEqual(Object.keys(en).sort());
-    for (const key of Object.keys(en)) expect(placeholders(strings[key]!), `${lang}: ${key}`).toEqual(placeholders(en[key]!));
-  });
-
-  it('names every display language in each app language', () => {
-    for (const lang of APP_LANGUAGES) {
-      const names = flatten(load(lang));
-      for (const display of DISPLAY_LANGUAGES) expect(names[`app.language.${display}`], `${lang}: ${display}`).toBeTruthy();
-    }
+  it('names every display language for the language pickers', () => {
+    for (const display of DISPLAY_LANGUAGES) expect(en[`app.language.${display}`], display).toBeTruthy();
   });
 });

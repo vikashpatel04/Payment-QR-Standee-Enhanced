@@ -2,7 +2,7 @@
   "name": "@counterpay/plugins",
   "version": "0.1.0",
   "private": true,
-  "description": "Point-of-sale trigger plugins for Counter Pay. The BNeeds watcher arrives in Phase 4.",
+  "description": "Point-of-sale trigger plugins for Counter Pay. A read-only bill watcher arrives in Phase 4.",
   "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",

@@ -7,13 +7,13 @@ describe('display state', () => {
   it('shows pay and acks it', () => {
     const { state, replies } = applyPcMessage(
       initialDisplayState(T0),
-      { v: 1, t: 'pay', seq: 12, amt: 114000, ref: 'DT2610120042', ttl: 180, uri: 'upi://pay?pa=x@y' },
+      { v: 1, t: 'pay', seq: 12, amt: 114000, ref: 'CP2610120042', ttl: 180, uri: 'upi://pay?pa=x@y' },
       T0,
     );
     expect(state.scene).toEqual({
       kind: 'pay',
       amt: 114000,
-      ref: 'DT2610120042',
+      ref: 'CP2610120042',
       uri: 'upi://pay?pa=x@y',
       since: T0,
       until: T0 + 180_000,

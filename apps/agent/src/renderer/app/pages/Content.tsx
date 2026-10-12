@@ -60,11 +60,14 @@ function ItemEditor({
   item,
   langs,
   logoUrl,
+  baseUrl,
   onChange,
 }: {
   item: AmbientItem;
   langs: string[];
   logoUrl: string | null;
+  /** The local display server, which serves the shop's images. */
+  baseUrl: string;
   onChange: (item: AmbientItem) => void;
 }) {
   const { t } = useTranslation();
@@ -100,7 +103,7 @@ function ItemEditor({
     case 'image':
       return (
         <div className={ui.row}>
-          <img className={styles.thumb} src={`http://127.0.0.1:5178${item.src}`} alt="" />
+          <img className={styles.thumb} src={`${baseUrl}${item.src}`} alt="" />
           <button
             type="button"
             className={ui.button}
@@ -120,7 +123,7 @@ export function Content({ snapshot }: { snapshot: AppSnapshot }) {
   const items = config.ambient.items;
   const langs = config.language.display;
   const simulator = snapshot.displays.find((d) => d.config.driver === 'simulator');
-  const logoUrl = config.brand.logoPath ? `http://127.0.0.1:5178/content/logo?v=${encodeURIComponent(config.brand.logoPath)}` : null;
+  const logoUrl = config.brand.logoPath ? `${snapshot.localBaseUrl}/content/logo?v=${encodeURIComponent(config.brand.logoPath)}` : null;
 
   const setItems = (next: AmbientItem[]) => updateConfig({ ambient: { items: next } });
   const move = (index: number, by: number) => {
@@ -252,6 +255,7 @@ export function Content({ snapshot }: { snapshot: AppSnapshot }) {
                     item={item}
                     langs={langs}
                     logoUrl={logoUrl}
+                    baseUrl={snapshot.localBaseUrl}
                     onChange={(next) => setItems(items.map((it, i) => (i === index ? next : it)))}
                   />
                   <div className={styles.itemActions}>

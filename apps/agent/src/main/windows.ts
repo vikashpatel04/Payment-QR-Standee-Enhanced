@@ -41,7 +41,7 @@ type PopupPhase = 'hidden' | 'open' | 'sent';
 
 /**
  * The Wispr Flow–style amount pill. Created once at launch and never destroyed, so
- * summoning it is instant. It remembers which window had focus (BNeeds) and always
+ * summoning it is instant. It remembers which window had focus (the billing software) and always
  * gives focus back.
  */
 export class PopupWindow {
@@ -133,7 +133,7 @@ export class PopupWindow {
 }
 
 /**
- * "QR cleared" and friends. Never focusable, shown inactive: it can't take focus from BNeeds.
+ * "QR cleared" and friends. Never focusable, shown inactive: it can't take focus from the billing software.
  * Created on first use and closed after a minute unused, to keep the idle agent small.
  */
 export class ToastWindow {

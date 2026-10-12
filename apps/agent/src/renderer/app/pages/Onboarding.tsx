@@ -1,3 +1,4 @@
+import { DISPLAY_LANGUAGES } from '@counterpay/core';
 import type { AmountLockTest, AppSnapshot } from '@shared/api';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -108,6 +109,7 @@ function Display({ snapshot, next, back }: { snapshot: AppSnapshot; next: () => 
     updateConfig({ displays: [...snapshot.config.displays, newDisplay(kind, snapshot, t(`app.displays.kind.${kind}`))] });
   };
 
+  const [primary = 'en', second = ''] = snapshot.config.language.display;
   const web = snapshot.displays.find((d) => d.config.driver === 'web' && d.config.enabled);
   const chosen = choice ? snapshot.displays.find((d) => d.config.driver === choice && d.config.enabled) : undefined;
 
@@ -157,6 +159,22 @@ function Display({ snapshot, next, back }: { snapshot: AppSnapshot; next: () => 
           </div>
         </div>
       )}
+      <label className={ui.field}>
+        <span className={ui.label}>{t('app.setup.languageLabel')}</span>
+        <select
+          className={ui.select}
+          value={second}
+          onChange={(e) => updateConfig({ language: { display: [primary, ...(e.target.value ? [e.target.value] : [])] } })}
+        >
+          <option value="">{t('app.content.none')}</option>
+          {DISPLAY_LANGUAGES.filter((lang) => lang !== primary).map((lang) => (
+            <option key={lang} value={lang}>
+              {t(`app.language.${lang}`)}
+            </option>
+          ))}
+        </select>
+        <span className={ui.hint}>{t('app.setup.languageHint')}</span>
+      </label>
       {chosen && choice !== 'web' && (
         <div className={ui.row}>
           <Preview view={chosen} snapshot={snapshot} height={160} />

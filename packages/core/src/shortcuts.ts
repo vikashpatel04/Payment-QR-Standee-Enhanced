@@ -107,7 +107,7 @@ export function shortcutWarning(accelerator: string): ShortcutWarning | null {
   }
   if (upper === 'SPACE' && modifiers.has('ctrl')) return 'layoutSwitch';
   if (upper === 'SPACE' && modifiers.has('alt')) return 'windowMenu';
-  // A letter, digit or symbol with no modifier would swallow ordinary typing in BNeeds.
+  // A letter, digit or symbol with no modifier would swallow ordinary typing in the billing software.
   const isFunctionKey = /^F([1-9]|1\d|2[0-4])$/i.test(key);
   const isQuietKey = ['SCROLLLOCK', 'INSERT'].includes(upper);
   const typingModifiers = [...modifiers].filter((m) => m !== 'shift');

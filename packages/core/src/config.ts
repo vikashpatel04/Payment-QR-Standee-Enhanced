@@ -36,10 +36,13 @@ export interface CounterPayConfig {
   displays: DisplayConfig[];
   ambient: { slideSeconds: number; items: AmbientItem[] };
   brand: { shopName: string; logoPath: string; accent: string };
-  language: { app: string; display: string[] };
+  /** Customer display languages, primary first; two are shown together. The app itself is in English. */
+  language: { display: string[] };
   history: { retentionDays: number };
   api: { enabled: boolean; token: string };
   updates: { channel: 'stable' | 'beta'; quietHours: [string, string] };
+  /** Local display server (127.0.0.1) and Wi-Fi display server. Changes apply on restart. */
+  server: { localPort: number; lanPort: number };
   startAtLogin: boolean;
 }
 
@@ -51,8 +54,8 @@ export interface ConfigSecrets {
 }
 
 export const DEFAULT_ACCENT = '#14B37D';
-/** Languages the whole app (main window, popup, tray) is translated into. */
-export const APP_LANGUAGES = ['en', 'ta'] as const;
+export const DEFAULT_LOCAL_PORT = 5178;
+export const DEFAULT_LAN_PORT = 5179;
 /**
  * Languages the customer display can show. English plus the common Indian languages;
  * a display shows up to two at once. Each has a locale file with at least the display text.
@@ -72,10 +75,11 @@ export function defaultConfig(secrets: ConfigSecrets): CounterPayConfig {
       items: [{ k: 'logo' }],
     },
     brand: { shopName: '', logoPath: '', accent: DEFAULT_ACCENT },
-    language: { app: 'en', display: ['en', 'ta'] },
+    language: { display: ['en'] },
     history: { retentionDays: 365 },
     api: { enabled: false, token: secrets.token() },
     updates: { channel: 'stable', quietHours: ['22:00', '08:00'] },
+    server: { localPort: DEFAULT_LOCAL_PORT, lanPort: DEFAULT_LAN_PORT },
     startAtLogin: true,
   };
 }
@@ -159,6 +163,9 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
   const history = isObject(r.history) ? r.history : {};
   const api = isObject(r.api) ? r.api : {};
   const updates = isObject(r.updates) ? r.updates : {};
+  const server = isObject(r.server) ? r.server : {};
+  const localPort = int(server.localPort, d.server.localPort, 1024, 65535);
+  const lanPort = int(server.lanPort, d.server.lanPort, 1024, 65535);
 
   const refPrefix = str(pay.refPrefix, d.pay.refPrefix).toUpperCase();
   const displays = Array.isArray(r.displays)
@@ -205,13 +212,11 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
       logoPath: str(brand.logoPath, d.brand.logoPath),
       accent: HEX_PATTERN.test(str(brand.accent, '')) ? str(brand.accent, '') : d.brand.accent,
     },
-    language: {
-      app: str(language.app, d.language.app) || d.language.app,
-      display: displayLangs.length ? displayLangs : d.language.display,
-    },
+    language: { display: displayLangs.length ? displayLangs : d.language.display },
     history: { retentionDays: int(history.retentionDays, d.history.retentionDays, 1, 3650) },
     api: { enabled: bool(api.enabled, d.api.enabled), token: str(api.token, '') || d.api.token },
     updates: { channel: updates.channel === 'beta' ? 'beta' : 'stable', quietHours },
+    server: { localPort, lanPort: lanPort === localPort ? (localPort === 65535 ? 65534 : localPort + 1) : lanPort },
     startAtLogin: bool(r.startAtLogin, d.startAtLogin),
   };
 }

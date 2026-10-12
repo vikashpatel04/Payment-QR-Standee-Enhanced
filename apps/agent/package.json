@@ -1,13 +1,12 @@
 {
   "name": "@counterpay/agent",
   "productName": "Counter Pay",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Counter Pay: show a fixed-amount UPI QR on a customer display with one shortcut.",
   "author": "Counter Pay contributors",
   "license": "MIT",
   "repository": "github:vikashpatel04/Payment-QR-Standee-Enhanced",
-  "homepage": "https://github.com/vikashpatel04/Payment-QR-Standee-Enhanced",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",

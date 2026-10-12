@@ -25,7 +25,6 @@ export interface PopupOpenInfo {
   maxRupees: number;
   reach: DisplayReach;
   payeeReady: boolean;
-  lang: string;
 }
 
 export type SubmitResult = { ok: true; reach: DisplayReach } | { ok: false; error: 'noPayee' | 'invalid' | 'failed' };
@@ -100,7 +99,10 @@ export interface AppSnapshot {
   onboarding: OnboardingState;
   /** Addresses a phone on the shop Wi-Fi opens to pair, when a Web display is enabled. */
   lanUrls: string[];
-  serverError: string | null;
+  /** A server that couldn't start, shown as a banner with the fix. */
+  serverError: { code: 'localPortBusy' | 'lanPortBusy'; port: number } | null;
+  /** Where this PC's display server is, for previews and images. */
+  localBaseUrl: string;
   monitors: MonitorInfo[];
   update: UpdateState;
   /** Set after an update installed, until the shop dismisses it. */

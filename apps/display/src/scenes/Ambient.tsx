@@ -1,6 +1,6 @@
 import type { AmbientItem, ContentMessage } from '@counterpay/core';
 import { useEffect, useState } from 'react';
-import { Bi } from '../Bilingual';
+import { Bi, say } from '../Bilingual';
 import { Qr } from '../Qr';
 import styles from './scenes.module.css';
 
@@ -43,7 +43,7 @@ function Slide({ item, content, langs }: { item: AmbientItem; content: ContentMe
             secondary={styles.slideTitleSecondary}
           />
           <div className={styles.smallCard}>
-            <Qr text={item.url} size={176} label="Google review QR" />
+            <Qr text={item.url} size={176} label={say(langs[0] ?? 'en', 'a11y.reviewQr')} />
           </div>
         </div>
       );

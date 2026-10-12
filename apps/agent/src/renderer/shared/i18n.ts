@@ -1,7 +1,7 @@
 import i18next, { type Resource } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// Every locale file. The app itself is in English and Tamil; the others carry the
+// Every locale file. The app itself is in English; the others carry the customer
 // display text the Content page shows as placeholders.
 const files = import.meta.glob<{ default: Record<string, unknown> }>('../../../../../locales/*.json', { eager: true });
 const resources: Resource = {};
@@ -17,9 +17,5 @@ void i18next.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   initAsync: false,
 });
-
-export function useLanguage(lang: string | undefined): void {
-  if (lang && i18next.language !== lang) void i18next.changeLanguage(lang);
-}
 
 export { i18next };

@@ -86,7 +86,7 @@ export function buildUri(base: string, paise: number, ref: string, options: Buil
   return serializeUpi({ params });
 }
 
-/** `dhanalakshmi@okaxis` is shown as `dhanal…@ok…`, enough to recognise without exposing it. */
+/** `merchantname@okaxis` is shown as `mercha…@ok…`, enough to recognise without exposing it. */
 export function maskVpa(vpa: string): string {
   const at = vpa.indexOf('@');
   const local = at === -1 ? vpa : vpa.slice(0, at);
