@@ -88,8 +88,10 @@
 }
 
 .update {
-  height: 30px;
+  min-height: 32px;
+  padding: 6px 10px;
   border: 0;
+  line-height: 1.25;
   border-radius: 8px;
   background: var(--accent);
   color: #04130d;

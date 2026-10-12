@@ -69,10 +69,14 @@ function Sidebar({ page, go, snapshot }: { page: Page; go: (page: Page) => void;
             title={snapshot.scene.kind === 'pay' ? t('app.update.busy') : undefined}
             onClick={() => void api.app.updates.install()}
           >
-            {t('app.update.sidebar', { version: snapshot.update.version ?? '' })}
+            {t('app.update.restart')}
           </button>
         )}
-        <div className={styles.version}>v{snapshot.version}</div>
+        <div className={styles.version}>
+          {snapshot.update.status === 'ready'
+            ? t('app.update.versionReady', { current: snapshot.version, next: snapshot.update.version ?? '' })
+            : `v${snapshot.version}`}
+        </div>
       </div>
     </nav>
   );

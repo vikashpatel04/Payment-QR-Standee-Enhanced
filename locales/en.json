@@ -369,13 +369,13 @@
       "check": "Check now",
       "restart": "Restart to update",
       "busy": "Clear the QR first",
-      "sidebar": "Restart to update to v{{version}}",
       "quietHours": "Quiet hours",
       "quietHint": "A downloaded update installs by itself in these hours when no QR is showing. It never restarts during billing.",
       "channelHint": "Beta gets new versions first.",
       "whatsNew": "Counter Pay was updated to v{{version}}.",
       "whatsNewLink": "What's new",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "versionReady": "v{{current}} → v{{next}} ready"
     },
     "server": {
       "localPortBusy": "Counter Pay could not start its display server: port {{port}} is in use. Change the port in Settings → Advanced, then restart Counter Pay.",
