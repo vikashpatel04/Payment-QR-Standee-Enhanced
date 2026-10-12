@@ -1,0 +1,22 @@
+{
+  "language": {
+    "name": "বাংলা"
+  },
+  "display": {
+    "scanToPay": "স্ক্যান করে পেমেন্ট করুন",
+    "scanHint": "যেকোনো UPI অ্যাপ দিয়ে স্ক্যান করুন",
+    "amountFixed": "টাকার পরিমাণ নির্দিষ্ট",
+    "payingLabel": "প্রাপক",
+    "shownAt": "{{time}}-এ দেখানো হয়েছে",
+    "thankYou": "ধন্যবাদ!",
+    "rateUs": "Google-এ আমাদের রেটিং দিন",
+    "welcome": "স্বাগতম",
+    "pairTitle": "এই স্ক্রিনটি যুক্ত করুন",
+    "pairHint": "Counter Pay → Displays-এ দেখানো পেয়ারিং কোডটি লিখুন।",
+    "pairButton": "যুক্ত করুন",
+    "pairWrong": "কোড মেলেনি। আবার চেষ্টা করুন।",
+    "pairWait": "অনেকবার চেষ্টা হয়েছে। এক মিনিট অপেক্ষা করুন।",
+    "connecting": "সংযোগ হচ্ছে…",
+    "testPattern": "টেস্ট প্যাটার্ন"
+  }
+}

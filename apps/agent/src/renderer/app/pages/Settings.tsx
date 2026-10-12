@@ -1,0 +1,191 @@
+import { formatINR, APP_LANGUAGES } from '@counterpay/core';
+import type { AppSnapshot } from '@shared/api';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../shared/api';
+import { PayeeImport } from '../components/PayeeImport';
+import { ShortcutRecorder } from '../components/ShortcutRecorder';
+import { Toggle } from '../components/Toggle';
+import { updateConfig, useDraft } from '../hooks';
+import ui from '../ui.module.css';
+
+function Setting({ name, hint, children }: { name: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className={ui.setting}>
+      <div className={ui.settingText}>
+        <span className={ui.settingName}>{name}</span>
+        {hint && <span className={ui.small}>{hint}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function PayeeLabel({ value, fallback }: { value: string; fallback: string }) {
+  const draft = useDraft(value, (payeeLabel) => updateConfig({ upi: { payeeLabel } }));
+  return <input className={ui.input} style={{ width: 240 }} placeholder={fallback} {...draft} />;
+}
+
+function MaxAmount({ value }: { value: number }) {
+  const draft = useDraft(String(value), (next) => {
+    const rupees = Math.round(Number(next));
+    if (rupees > 0) updateConfig({ pay: { maxRupees: rupees } });
+  });
+  return <input className={ui.input} style={{ width: 130 }} inputMode="numeric" {...draft} />;
+}
+
+function RefPrefix({ value }: { value: string }) {
+  const draft = useDraft(value, (next) => {
+    const prefix = next.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    if (prefix) updateConfig({ pay: { refPrefix: prefix } });
+  });
+  return <input className={ui.input} style={{ width: 90, textTransform: 'uppercase' }} maxLength={6} {...draft} />;
+}
+
+export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
+  const { t } = useTranslation();
+  const { config, payee, shortcuts } = snapshot;
+  const [changingPayee, setChangingPayee] = useState(!payee);
+  const [revealToken, setRevealToken] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  return (
+    <div className={ui.page}>
+      <header className={ui.header}>
+        <div>
+          <h1 className={ui.title}>{t('app.nav.settings')}</h1>
+          <p className={ui.lead}>{t('app.settings.lead')}</p>
+        </div>
+      </header>
+
+      <section className={ui.card}>
+        <h2 className={ui.cardTitle}>{t('app.settings.payee')}</h2>
+        {payee && !changingPayee ? (
+          <>
+            <Setting name={payee.name || t('app.payee.noName')} hint={`${t('app.payee.upiId')}: ${payee.maskedVpa}`}>
+              <button type="button" className={ui.button} onClick={() => setChangingPayee(true)}>
+                {t('app.settings.changePayee')}
+              </button>
+            </Setting>
+            {payee.hasSignature && <div className={ui.banner}>{t('app.payee.signed')}</div>}
+            <Setting name={t('app.payee.label')} hint={t('app.payee.labelHint')}>
+              <PayeeLabel value={config.upi.payeeLabel} fallback={payee.name} />
+            </Setting>
+          </>
+        ) : (
+          <PayeeImport compact onSaved={() => setChangingPayee(false)} />
+        )}
+      </section>
+
+      <section className={ui.card}>
+        <h2 className={ui.cardTitle}>{t('app.settings.shortcuts')}</h2>
+        <Setting name={t('app.home.summon')} hint={t('app.settings.summonHint')}>
+          <ShortcutRecorder
+            state={shortcuts.summon}
+            other={shortcuts.clear.accelerator}
+            onChange={(summon) => updateConfig({ shortcuts: { summon } })}
+          />
+        </Setting>
+        <Setting name={t('app.home.clear')} hint={t('app.settings.clearHint')}>
+          <ShortcutRecorder
+            state={shortcuts.clear}
+            other={shortcuts.summon.accelerator}
+            onChange={(clear) => updateConfig({ shortcuts: { clear } })}
+          />
+        </Setting>
+      </section>
+
+      <section className={ui.card}>
+        <h2 className={ui.cardTitle}>{t('app.settings.payment')}</h2>
+        <Setting name={t('app.settings.expiry')} hint={t('app.settings.expiryHint')}>
+          <select className={ui.select} value={config.pay.ttlSeconds} onChange={(e) => updateConfig({ pay: { ttlSeconds: Number(e.target.value) } })}>
+            {[60, 120, 180, 300, 600].map((s) => (
+              <option key={s} value={s}>
+                {t('app.settings.minutes', { count: s / 60 })}
+              </option>
+            ))}
+          </select>
+        </Setting>
+        <Setting name={t('app.settings.max')} hint={t('app.settings.maxHint', { max: formatINR(config.pay.maxRupees * 100) })}>
+          <MaxAmount value={config.pay.maxRupees} />
+        </Setting>
+        <Setting name={t('app.settings.prefix')} hint={t('app.settings.prefixHint', { example: `${config.pay.refPrefix}2610120042` })}>
+          <RefPrefix value={config.pay.refPrefix} />
+        </Setting>
+        <Setting name={t('app.settings.mam')} hint={t('app.settings.mamHint')}>
+          <Toggle on={config.upi.addMam} label={t('app.settings.mam')} onChange={(addMam) => updateConfig({ upi: { addMam } })} />
+        </Setting>
+      </section>
+
+      <section className={ui.card}>
+        <h2 className={ui.cardTitle}>{t('app.settings.general')}</h2>
+        <Setting name={t('app.settings.language')}>
+          <select className={ui.select} value={config.language.app} onChange={(e) => updateConfig({ language: { app: e.target.value } })}>
+            {APP_LANGUAGES.map((lang) => (
+              <option key={lang} value={lang}>
+                {t(`app.language.${lang}`)}
+              </option>
+            ))}
+          </select>
+        </Setting>
+        <Setting name={t('app.settings.startAtLogin')} hint={t('app.settings.startAtLoginHint')}>
+          <Toggle on={config.startAtLogin} label={t('app.settings.startAtLogin')} onChange={(startAtLogin) => updateConfig({ startAtLogin })} />
+        </Setting>
+        <Setting name={t('app.settings.retention')}>
+          <select
+            className={ui.select}
+            value={config.history.retentionDays}
+            onChange={(e) => updateConfig({ history: { retentionDays: Number(e.target.value) } })}
+          >
+            {[30, 90, 180, 365, 730, 1825].map((d) => (
+              <option key={d} value={d}>
+                {t('app.settings.days', { count: d })}
+              </option>
+            ))}
+          </select>
+        </Setting>
+        <Setting name={t('app.settings.updates')} hint={t('app.settings.phase3')}>
+          <select className={ui.select} value={config.updates.channel} disabled>
+            <option value="stable">{t('app.settings.stable')}</option>
+            <option value="beta">{t('app.settings.beta')}</option>
+          </select>
+        </Setting>
+      </section>
+
+      <section className={ui.card}>
+        <h2 className={ui.cardTitle}>{t('app.settings.advanced')}</h2>
+        <Setting name={t('app.settings.apiToken')} hint={t('app.settings.apiHint')}>
+          <div className={ui.row}>
+            <span className={ui.mono}>{revealToken ? config.api.token : '•'.repeat(16)}</span>
+            <button type="button" className={ui.ghost} onClick={() => setRevealToken((r) => !r)}>
+              {t(revealToken ? 'app.settings.hide' : 'app.settings.show')}
+            </button>
+          </div>
+        </Setting>
+        <Setting name={t('app.settings.backup')} hint={t('app.settings.backupHint')}>
+          <div className={ui.row}>
+            <button
+              type="button"
+              className={ui.button}
+              onClick={() => void api.app.backupConfig().then((r) => r.saved && setNotice(t('app.settings.backedUp', { path: r.path })))}
+            >
+              {t('app.settings.export')}
+            </button>
+            <button
+              type="button"
+              className={ui.button}
+              onClick={() =>
+                void api.app
+                  .restoreConfig()
+                  .then((r) => setNotice(r.restored ? t('app.settings.restored') : r.error ? t('app.settings.restoreFailed', { error: r.error }) : null))
+              }
+            >
+              {t('app.settings.import')}
+            </button>
+          </div>
+        </Setting>
+        {notice && <div className={ui.small}>{notice}</div>}
+      </section>
+    </div>
+  );
+}

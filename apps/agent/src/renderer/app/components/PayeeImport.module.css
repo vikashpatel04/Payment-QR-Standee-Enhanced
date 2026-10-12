@@ -1,0 +1,58 @@
+.import {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 150px;
+  padding: 20px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 14px;
+  background: var(--sunken);
+  cursor: pointer;
+  text-align: center;
+}
+
+.drop:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dropCompact {
+  composes: drop;
+  min-height: 96px;
+}
+
+.dropTitle {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.or {
+  font-size: 12px;
+  color: var(--faint);
+  text-align: center;
+}
+
+.found {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.payee {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.payeeName {
+  font-size: 18px;
+  font-weight: 650;
+}

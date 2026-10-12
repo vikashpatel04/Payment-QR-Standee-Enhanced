@@ -1,0 +1,38 @@
+/* Bundled, never loaded from the web. Indian scripts fall back to the system's own fonts. */
+@import '@fontsource-variable/inter';
+
+:root {
+  --ink: #0f1513;
+  --quiet: #5e6a64;
+  --paper: #f3f5f2;
+  --card: #ffffff;
+  --night: #0c110f;
+  --night-ink: #e8eeea;
+  --night-quiet: #8d9993;
+  --accent: #14b37d;
+  --font: 'Inter Variable', 'Segoe UI', 'Nirmala UI', 'Noto Sans', system-ui, sans-serif;
+  color-scheme: light dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--night);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  user-select: none;
+  cursor: none;
+}

@@ -1,0 +1,345 @@
+{
+  "language": {
+    "name": "English"
+  },
+  "display": {
+    "scanToPay": "Scan to pay",
+    "scanHint": "Scan with any UPI app",
+    "amountFixed": "Amount is fixed",
+    "payingLabel": "Paying",
+    "shownAt": "Shown at {{time}}",
+    "thankYou": "Thank you!",
+    "rateUs": "Rate us on Google",
+    "welcome": "Welcome",
+    "pairTitle": "Pair this screen",
+    "pairHint": "Enter the pairing code from Counter Pay → Displays.",
+    "pairButton": "Pair",
+    "pairWrong": "That code didn't match. Try again.",
+    "pairWait": "Too many tries. Wait a minute.",
+    "connecting": "Connecting…",
+    "testPattern": "Test pattern"
+  },
+  "popup": {
+    "placeholder": "Amount",
+    "hint": "Enter to show · Esc to cancel",
+    "replacing": "Replacing {{amount}}",
+    "onDisplay": "On display",
+    "onSimulator": "Shown on simulator",
+    "displayOffline": "Display not connected · shown on simulator",
+    "noPayee": "Set up the payee in Counter Pay first",
+    "failed": "Couldn't show the QR"
+  },
+  "errors": {
+    "enterAmount": "Enter an amount",
+    "max": "Max {{max}}",
+    "format": "Digits only"
+  },
+  "toast": {
+    "cleared": "QR cleared",
+    "nothingToClear": "No QR showing",
+    "shortcutsPaused": "Shortcuts paused",
+    "shortcutsResumed": "Shortcuts on"
+  },
+  "tray": {
+    "tooltip": "Counter Pay",
+    "open": "Open Counter Pay",
+    "show": "Show amount",
+    "clear": "Clear",
+    "pause": "Pause shortcuts",
+    "updates": "Check for updates",
+    "quit": "Quit"
+  },
+  "history": {
+    "csv": {
+      "date": "Date",
+      "time": "Time",
+      "ref": "Reference",
+      "amount": "Amount (₹)",
+      "displays": "Displays",
+      "ended": "Ended by",
+      "duration": "Shown for (s)",
+      "source": "Source",
+      "note": "Note"
+    },
+    "reason": {
+      "cleared": "Cleared",
+      "replaced": "Replaced",
+      "expired": "Expired",
+      "link-lost": "Link lost",
+      "bill-saved": "Bill saved",
+      "open": "Showing"
+    },
+    "source": {
+      "popup": "Popup",
+      "api": "API",
+      "cli": "CLI",
+      "watcher": "Watcher"
+    }
+  },
+  "app": {
+    "common": {
+      "back": "Back",
+      "next": "Next"
+    },
+    "nav": {
+      "home": "Home",
+      "history": "History",
+      "displays": "Displays",
+      "content": "Content",
+      "settings": "Settings"
+    },
+    "language": {
+      "en": "English",
+      "hi": "Hindi (हिन्दी)",
+      "bn": "Bengali (বাংলা)",
+      "mr": "Marathi (मराठी)",
+      "te": "Telugu (తెలుగు)",
+      "ta": "Tamil (தமிழ்)",
+      "gu": "Gujarati (ગુજરાતી)",
+      "kn": "Kannada (ಕನ್ನಡ)",
+      "ml": "Malayalam (മലയാളം)",
+      "pa": "Punjabi (ਪੰਜਾਬੀ)",
+      "or": "Odia (ଓଡ଼ିଆ)"
+    },
+    "status": {
+      "off": "Off",
+      "ready": "Ready",
+      "connected": "Connected",
+      "waiting": "Waiting",
+      "linkLost": "Link lost",
+      "monitorMissing": "Monitor not found",
+      "offline": "Offline",
+      "phase2": "Coming in Phase 2"
+    },
+    "home": {
+      "noShop": "Set your shop name in Content",
+      "showingPay": "Showing {{amount}}",
+      "left": "{{time}} left",
+      "showingThanks": "Showing Thanks",
+      "showingAmbient": "Showing Ambient",
+      "noPayee": "No payee yet. Import your merchant standee QR to show QRs.",
+      "setUp": "Set up",
+      "change": "Change",
+      "displays": "Customer displays",
+      "openSimulator": "Open simulator",
+      "noDisplays": "No display is on. Turn one on in Displays.",
+      "showAmount": "Show an amount",
+      "show": "Show",
+      "testPattern": "Test {{name}}",
+      "today": "Today",
+      "qrsShown": "QRs shown",
+      "totalShown": "Total shown",
+      "notPayments": "What was shown, not what was paid. The soundpod and your UPI merchant app stay the record of payments.",
+      "shortcuts": "Shortcuts",
+      "summon": "Show amount",
+      "clear": "Clear QR",
+      "shortcutHint": "They work from any window, including BNeeds. Change them in Settings.",
+      "paused": "Shortcuts paused",
+      "lockTest": "Amount-lock test",
+      "lockTestNone": "Not done yet. First-run setup includes it."
+    },
+    "history": {
+      "lead": "Every QR shown on a customer display.",
+      "export": "Export CSV",
+      "exported": "Saved to {{path}}",
+      "range": {
+        "today": "Today",
+        "week": "7 days",
+        "custom": "Custom"
+      },
+      "from": "From",
+      "to": "To",
+      "min": "Min ₹",
+      "max": "Max ₹",
+      "outcome": "Ended by",
+      "anyOutcome": "Any",
+      "all": "Shown",
+      "amount": "Amount",
+      "shownFor": "Shown for",
+      "seconds_one": "{{count}} s",
+      "seconds_other": "{{count}} s",
+      "reshow": "Show again",
+      "empty": "No QRs in this range."
+    },
+    "displays": {
+      "lead": "Any screen the customer can see. Every display shows the same scene.",
+      "add": "Add display",
+      "addWindow": "A second screen plugged into this PC (HDMI, USB-C or a small LCD).",
+      "addWeb": "A phone, tablet or old laptop on the shop Wi-Fi. No new hardware.",
+      "addUsb": "USB display (ESP32, E-ink)",
+      "phase2": "USB displays arrive in Phase 2.",
+      "kind": {
+        "simulator": "Simulator",
+        "window": "Another monitor",
+        "web": "Phone or tablet",
+        "serial-frame": "USB E-ink display",
+        "serial-smart": "USB colour display"
+      },
+      "enabled": "Display on",
+      "simulatorHint": "Shows the customer screen in a window on this PC, for trying Counter Pay before buying hardware.",
+      "monitor": "Monitor",
+      "rotation": "Rotation",
+      "noSecondMonitor": "No second monitor",
+      "plugIn": "Plug in a second monitor first. Counter Pay never covers the cashier's own screen.",
+      "pairingCode": "Pairing code",
+      "openOnPhone": "On the phone, open:",
+      "noNetwork": "This PC isn't on a network.",
+      "paired_one": "{{count}} screen paired",
+      "paired_other": "{{count}} screens paired",
+      "newCode": "New code",
+      "testPattern": "Test pattern",
+      "remove": "Remove",
+      "lastAck": "Last reply in {{ms}} ms"
+    },
+    "content": {
+      "lead": "What customers see between payments, and on the Thanks screen.",
+      "brand": "Brand",
+      "shopName": "Shop name",
+      "chooseLogo": "Choose logo",
+      "changeLogo": "Change logo",
+      "removeLogo": "Remove",
+      "accent": "Accent",
+      "languages": "Display languages",
+      "primary": "First language",
+      "secondary": "Second language",
+      "none": "None",
+      "playlist": "Ambient playlist",
+      "slideSeconds": "Each slide",
+      "kind": {
+        "logo": "Logo",
+        "rating": "Rating QR",
+        "text": "Text",
+        "image": "Image"
+      },
+      "logoSlide": "Your logo and a welcome line.",
+      "noLogo": "No logo yet: the shop name is shown instead.",
+      "reviewLink": "Google review link",
+      "change": "Change",
+      "up": "Move up",
+      "down": "Move down",
+      "delete": "Delete",
+      "thanks": "Thanks screen",
+      "thanksSeconds": "Show Thanks for",
+      "thanksHint": "After Clear. It shows the rating QR when you have added one.",
+      "skipThanks": "Skip",
+      "preview": "Simulator, live"
+    },
+    "settings": {
+      "lead": "Changes apply at once.",
+      "payee": "Payee",
+      "changePayee": "Change payee",
+      "shortcuts": "Shortcuts",
+      "summonHint": "Opens the amount popup.",
+      "clearHint": "Removes the QR without opening anything.",
+      "payment": "Payment",
+      "expiry": "QR expires after",
+      "expiryHint": "A QR nobody cleared goes away on its own.",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "max": "Maximum amount (₹)",
+      "maxHint": "Amounts above {{max}} are refused, to catch an extra zero.",
+      "prefix": "Reference prefix",
+      "prefixHint": "References look like {{example}}.",
+      "mam": "Add minimum amount (mam)",
+      "mamHint": "Only if the amount-lock test showed it helps.",
+      "general": "General",
+      "language": "App language",
+      "startAtLogin": "Start at login",
+      "startAtLoginHint": "Counter Pay waits in the tray, ready for the shortcut.",
+      "retention": "Keep History for",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "updates": "Update channel",
+      "phase3": "Automatic updates arrive in Phase 3.",
+      "stable": "Stable",
+      "beta": "Beta",
+      "advanced": "Advanced",
+      "apiToken": "Local API token",
+      "apiHint": "For point-of-sale apps and scripts on this PC. The API arrives in Phase 3.",
+      "show": "Show",
+      "hide": "Hide",
+      "backup": "Backup",
+      "backupHint": "Save or restore all settings as a file.",
+      "export": "Save settings…",
+      "import": "Restore settings…",
+      "backedUp": "Saved to {{path}}",
+      "restored": "Settings restored.",
+      "restoreFailed": "Couldn't restore: {{error}}"
+    },
+    "payee": {
+      "drop": "Drop a photo or screenshot of your standee QR",
+      "dropHint": "Or click to choose a file, or paste a screenshot (Ctrl+V).",
+      "reading": "Reading the QR…",
+      "or": "or paste the QR text",
+      "check": "Check",
+      "noQr": "No QR code found in that picture. Try a sharper, closer photo.",
+      "issue": {
+        "notUpi": "That isn't a UPI payment QR.",
+        "noPayee": "That QR has no UPI ID (pa)."
+      },
+      "noName": "No name in the QR",
+      "upiId": "UPI ID",
+      "mcc": "Merchant code",
+      "signed": "This QR is signed. Adding an amount may stop some apps accepting it: run the amount-lock test before relying on it.",
+      "label": "Name shown to customers",
+      "labelHint": "Shown as \"Paying: …\" so customers can match the name their UPI app shows.",
+      "save": "Use this payee"
+    },
+    "shortcut": {
+      "record": "Record a shortcut",
+      "pressKeys": "Press the keys…",
+      "same": "Show and Clear need different keys.",
+      "refused": "Windows wouldn't let Counter Pay use {{key}}. Pick another key.",
+      "warning": {
+        "reservedF12": "Windows reserves {{key}} for debuggers, so it can't be a shortcut. Try F9.",
+        "layoutSwitch": "{{key}} switches keyboard layouts (Tamil input). Pick another key.",
+        "windowMenu": "{{key}} opens the window menu. Pick another key.",
+        "needsKey": "Press a key, not just Ctrl, Alt or Shift.",
+        "plainKey": "{{key}} on its own would stop that key typing in BNeeds. Use a function key or add Ctrl or Alt."
+      }
+    },
+    "test": {
+      "result": {
+        "locked": "Amount locked",
+        "editable": "Amount could be changed",
+        "mixed": "Locked in some apps"
+      },
+      "meaning": {
+        "locked": "Customers' apps can't change the amount on your QR.",
+        "editable": "The preset amount still stops most casual short-paying. Keep \"goods after full payment\".",
+        "mixed": "Some apps let customers edit it. Watch the soundpod for those."
+      }
+    },
+    "setup": {
+      "step": "Step {{step}} of {{total}}",
+      "payeeTitle": "Your payee",
+      "payeeLead": "Counter Pay builds every QR from your real merchant standee QR, so money always goes to the same account.",
+      "shortcutsTitle": "Your shortcuts",
+      "shortcutsLead": "Press the keys you want. They work while BNeeds has focus.",
+      "shortcutsNote": "Try each one on the BNeeds billing screen first, so nothing collides.",
+      "displayTitle": "Where customers see the QR",
+      "displayLead": "Pick one to start. You can add more later in Displays.",
+      "choice": {
+        "simulator": "This PC (simulator)",
+        "simulatorHint": "A window on this screen. Good for trying the workflow.",
+        "window": "Another monitor",
+        "windowHint": "A second screen facing the customer.",
+        "web": "A phone or tablet on Wi-Fi",
+        "webHint": "Open a web page on it and enter a code."
+      },
+      "testTitle": "The amount-lock test",
+      "testLead": "A ₹1 QR is now on your display. This checks whether customers' apps can change a fixed amount.",
+      "testStep1": "Scan it with two or three UPI apps (GPay, PhonePe, Paytm).",
+      "testStep2": "Look at the amount before paying. Try to change it.",
+      "testStep3": "Pay ₹1 once and check that the soundpod announces it.",
+      "testWaiting": "Putting the QR on your display…",
+      "question": "Could you change the amount?",
+      "answer": {
+        "locked": "No, it was locked",
+        "editable": "Yes, in every app",
+        "mixed": "In some apps"
+      },
+      "skip": "Skip for now"
+    }
+  }
+}

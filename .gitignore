@@ -1,0 +1,13 @@
+node_modules/
+out/
+dist/
+release/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local shop config and history never belong in the repo.
+*.db
+*.db-journal
+config.local.json

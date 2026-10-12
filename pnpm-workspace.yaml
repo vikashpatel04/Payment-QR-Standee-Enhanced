@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+  - apps/*
+
+# electron-builder packs native modules (better-sqlite3, koffi) most reliably from a flat node_modules.
+nodeLinker: hoisted
+
+# better-sqlite3 13 and koffi ship prebuilt Node-API binaries that load in both Node and Electron,
+# so nothing is compiled and contributors need no C++ toolchain. better-sqlite3 is left out on
+# purpose: running its scripts would trigger an unnecessary node-gyp rebuild.
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+  - koffi

@@ -1,0 +1,70 @@
+/* The main window follows the Windows light or dark theme. */
+:root {
+  --bg: #f5f6f4;
+  --panel: #ffffff;
+  --sunken: #eef0ed;
+  --sidebar: #eceeea;
+  --ink: #101513;
+  --quiet: #5f6b65;
+  --faint: #8c9690;
+  --line: rgb(16 21 19 / 10%);
+  --line-strong: rgb(16 21 19 / 18%);
+  --accent: #14b37d;
+  --accent-ink: #0b7a55;
+  --accent-soft: rgb(20 179 125 / 12%);
+  --bad: #d93025;
+  --bad-soft: rgb(217 48 37 / 10%);
+  --warn: #b45309;
+  --warn-soft: rgb(245 158 11 / 14%);
+  --ok: #16a34a;
+  --shadow: 0 1px 2px rgb(16 21 19 / 6%), 0 4px 14px rgb(16 21 19 / 5%);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111614;
+    --panel: #181e1b;
+    --sunken: #141a17;
+    --sidebar: #0d1210;
+    --ink: #e9eeeb;
+    --quiet: #9aa6a0;
+    --faint: #6f7a75;
+    --line: rgb(255 255 255 / 8%);
+    --line-strong: rgb(255 255 255 / 16%);
+    --accent: #1fc48c;
+    --accent-ink: #4fdcaa;
+    --accent-soft: rgb(31 196 140 / 14%);
+    --bad: #ff6b5e;
+    --bad-soft: rgb(255 107 94 / 12%);
+    --warn: #f5b04c;
+    --warn-soft: rgb(245 176 76 / 12%);
+    --ok: #34d399;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%);
+    color-scheme: dark;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

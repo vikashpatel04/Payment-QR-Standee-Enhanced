@@ -1,0 +1,22 @@
+{
+  "language": {
+    "name": "मराठी"
+  },
+  "display": {
+    "scanToPay": "स्कॅन करून पैसे भरा",
+    "scanHint": "कोणत्याही UPI ॲपने स्कॅन करा",
+    "amountFixed": "रक्कम निश्चित आहे",
+    "payingLabel": "प्राप्तकर्ता",
+    "shownAt": "{{time}} वाजता दाखवले",
+    "thankYou": "धन्यवाद!",
+    "rateUs": "Google वर आम्हाला रेटिंग द्या",
+    "welcome": "स्वागत आहे",
+    "pairTitle": "ही स्क्रीन जोडा",
+    "pairHint": "Counter Pay → Displays मध्ये दाखवलेला जोडणी कोड टाका.",
+    "pairButton": "जोडा",
+    "pairWrong": "कोड जुळला नाही. पुन्हा प्रयत्न करा.",
+    "pairWait": "खूप प्रयत्न झाले. एक मिनिट थांबा.",
+    "connecting": "जोडत आहे…",
+    "testPattern": "चाचणी पॅटर्न"
+  }
+}

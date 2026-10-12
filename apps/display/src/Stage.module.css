@@ -1,0 +1,25 @@
+.viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  transition: background-color 300ms ease;
+}
+
+.rotor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    transition: none;
+  }
+}

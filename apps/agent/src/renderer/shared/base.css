@@ -1,0 +1,29 @@
+/* Bundled, never loaded from the web. Indian scripts fall back to Windows' Nirmala UI. */
+@import '@fontsource-variable/inter';
+
+:root {
+  --font: 'Inter Variable', 'Segoe UI', 'Nirmala UI', system-ui, sans-serif;
+  --font-display: 'Inter Variable', 'Segoe UI', 'Nirmala UI', system-ui, sans-serif;
+  --accent: #14b37d;
+  --ok: #22c55e;
+  --bad: #ef4444;
+  --idle: #9aa39e;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}

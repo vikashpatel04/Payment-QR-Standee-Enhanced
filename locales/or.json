@@ -1,0 +1,22 @@
+{
+  "language": {
+    "name": "ଓଡ଼ିଆ"
+  },
+  "display": {
+    "scanToPay": "ସ୍କାନ୍ କରି ପେମେଣ୍ଟ କରନ୍ତୁ",
+    "scanHint": "ଯେକୌଣସି UPI ଆପ୍‌ରେ ସ୍କାନ୍ କରନ୍ତୁ",
+    "amountFixed": "ରାଶି ସ୍ଥିର ଅଛି",
+    "payingLabel": "ପ୍ରାପକ",
+    "shownAt": "{{time}}ରେ ଦେଖାଯାଇଛି",
+    "thankYou": "ଧନ୍ୟବାଦ!",
+    "rateUs": "Google ରେ ଆମକୁ ରେଟିଂ ଦିଅନ୍ତୁ",
+    "welcome": "ସ୍ୱାଗତ",
+    "pairTitle": "ଏହି ସ୍କ୍ରିନ୍‌କୁ ଯୋଡନ୍ତୁ",
+    "pairHint": "Counter Pay → Displays ରେ ଦେଖାଯାଇଥିବା ଯୋଡିବା କୋଡ୍ ଲେଖନ୍ତୁ।",
+    "pairButton": "ଯୋଡନ୍ତୁ",
+    "pairWrong": "କୋଡ୍ ମେଳ ଖାଉନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+    "pairWait": "ବହୁତ ଥର ଚେଷ୍ଟା ହେଲା। ଗୋଟିଏ ମିନିଟ୍ ଅପେକ୍ଷା କରନ୍ତୁ।",
+    "connecting": "ସଂଯୋଗ ହେଉଛି…",
+    "testPattern": "ଟେଷ୍ଟ ପ୍ୟାଟର୍ନ"
+  }
+}

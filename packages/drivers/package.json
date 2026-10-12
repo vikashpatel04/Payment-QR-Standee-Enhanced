@@ -1,0 +1,20 @@
+{
+  "name": "@counterpay/drivers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Display drivers for Counter Pay: simulator, window, web and (Phase 2) serial.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@counterpay/core": "workspace:*"
+  }
+}

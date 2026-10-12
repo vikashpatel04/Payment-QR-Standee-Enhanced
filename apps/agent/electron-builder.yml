@@ -1,0 +1,41 @@
+# Per-user NSIS installer: no admin prompt. Start-at-login is set by the app itself on first run.
+appId: org.counterpay.app
+productName: Counter Pay
+copyright: Copyright © 2026 Counter Pay contributors
+directories:
+  output: release/${version}
+  buildResources: resources
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+  # Only the Windows x64 binary of better-sqlite3 is needed, not its other platforms or SQLite sources.
+  - '!node_modules/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*.node'
+  - '!node_modules/better-sqlite3/prebuilds/win32-arm64.node'
+  - '!node_modules/better-sqlite3/{deps,src}/**'
+extraResources:
+  - from: ../display/dist
+    to: display
+  - from: resources/icons
+    to: icons
+# better-sqlite3 and koffi ship prebuilt Node-API binaries; nothing is rebuilt and no C++ toolchain is needed.
+npmRebuild: false
+asarUnpack:
+  - '**/*.node'
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icons/icon.ico
+  artifactName: counter-pay-setup-${version}.${ext}
+  # TODO(phase-3): sign the installer and every update (SignPath Foundation or Azure Trusted Signing).
+nsis:
+  oneClick: true
+  perMachine: false
+  allowElevation: false
+  runAfterFinish: true
+  createDesktopShortcut: false
+  createStartMenuShortcut: true
+  shortcutName: Counter Pay
+# TODO(phase-3): GitHub Releases feed for electron-updater.
+publish: null

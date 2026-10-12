@@ -1,0 +1,48 @@
+{
+  "name": "@counterpay/agent",
+  "productName": "Counter Pay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Counter Pay: show a fixed-amount UPI QR on a customer display with one shortcut.",
+  "author": "Counter Pay contributors",
+  "license": "MIT",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "dist": "pnpm --filter @counterpay/display build && electron-vite build && electron-builder --win --x64",
+    "dist:dir": "pnpm --filter @counterpay/display build && electron-vite build && electron-builder --win --x64 --dir"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "i18next": "^26.4.4",
+    "koffi": "^3.3.3",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@counterpay/core": "workspace:*",
+    "@counterpay/drivers": "workspace:*",
+    "@counterpay/plugins": "workspace:*",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/ws": "^8.18.2",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "44.7.0",
+    "electron-builder": "^26.15.3",
+    "electron-store": "^11.0.2",
+    "electron-vite": "5.0.0",
+    "jsqr": "^1.4.0",
+    "motion": "^14.1.0",
+    "qrcode": "^1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-i18next": "^17.0.16",
+    "vite": "^7.3.7"
+  }
+}

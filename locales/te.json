@@ -1,0 +1,22 @@
+{
+  "language": {
+    "name": "తెలుగు"
+  },
+  "display": {
+    "scanToPay": "స్కాన్ చేసి చెల్లించండి",
+    "scanHint": "ఏ UPI యాప్‌తోనైనా స్కాన్ చేయండి",
+    "amountFixed": "మొత్తం నిర్ణయించబడింది",
+    "payingLabel": "గ్రహీత",
+    "shownAt": "{{time}}కి చూపబడింది",
+    "thankYou": "ధన్యవాదాలు!",
+    "rateUs": "Google లో మాకు రేటింగ్ ఇవ్వండి",
+    "welcome": "స్వాగతం",
+    "pairTitle": "ఈ స్క్రీన్‌ను జత చేయండి",
+    "pairHint": "Counter Pay → Displays లో చూపిన జత కోడ్‌ను నమోదు చేయండి.",
+    "pairButton": "జత చేయి",
+    "pairWrong": "కోడ్ సరిపోలలేదు. మళ్ళీ ప్రయత్నించండి.",
+    "pairWait": "చాలా ప్రయత్నాలు. ఒక నిమిషం ఆగండి.",
+    "connecting": "కనెక్ట్ అవుతోంది…",
+    "testPattern": "పరీక్ష నమూనా"
+  }
+}
