@@ -2,13 +2,29 @@ import { app } from 'electron';
 import { join } from 'node:path';
 import { Agent } from './agent';
 import { loadPlatform } from './platform';
+import { selfTest } from './self-test';
 
-// A development build keeps its settings and History apart from the installed app.
-if (!app.isPackaged) app.setPath('userData', join(app.getPath('appData'), 'Counter Pay Dev'));
-
-if (!app.requestSingleInstanceLock()) {
-  app.quit();
+if (process.argv.includes('--self-test')) {
+  // Diagnostics only: no windows, shortcuts, servers or login item, and throwaway data.
+  app.setPath('userData', join(app.getPath('temp'), 'counter-pay-self-test'));
+  void app.whenReady().then(async () => {
+    const report = await selfTest();
+    process.stdout.write(`${JSON.stringify(report)}\n`);
+    app.exit(report.ok ? 0 : 1);
+  });
 } else {
+  startAgent();
+}
+
+function startAgent(): void {
+  // A development build keeps its settings and History apart from the installed app.
+  if (!app.isPackaged) app.setPath('userData', join(app.getPath('appData'), 'Counter Pay Dev'));
+
+  if (!app.requestSingleInstanceLock()) {
+    app.quit();
+    return;
+  }
+
   let agent: Agent | null = null;
 
   app.setAppUserModelId('org.counterpay.app');
@@ -30,6 +46,7 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(async () => {
     const platform = await loadPlatform();
     agent = new Agent(platform);
-    await agent.start({ hidden: process.argv.includes('--hidden') });
+    // --updated: relaunched by the installer after a quiet-hours update; stay in the tray.
+    await agent.start({ hidden: process.argv.includes('--hidden') || process.argv.includes('--updated') });
   });
 }

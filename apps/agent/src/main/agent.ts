@@ -8,6 +8,7 @@ import {
   type DisplayContent,
   historyToCsv,
   isPayeeConfigured,
+  isQuietMoment,
   localDay,
   type PayeeInfo,
   type PaySource,
@@ -20,7 +21,7 @@ import type { DriverStatus } from '@counterpay/drivers';
 import { app, dialog, ipcMain, type IpcMainEvent, type IpcMainInvokeEvent, powerMonitor } from 'electron';
 import { randomBytes } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { extname } from 'node:path';
+import { extname, join } from 'node:path';
 import {
   type AppSnapshot,
   type ConfigPatch,
@@ -44,6 +45,7 @@ import { LAN_PORT, LanServer, LOCAL_PORT, LocalServer } from './server';
 import { Shortcuts } from './shortcuts';
 import { StateStore } from './state-store';
 import { AppTray } from './tray';
+import { Updater } from './updater';
 import { MainWindow, PopupWindow, SimulatorWindow, ToastWindow } from './windows';
 
 type StartResult = { ok: false; error: 'noPayee' | 'invalid' | 'failed' } | { ok: true; outcome: Promise<ShowOutcome> };
@@ -99,6 +101,9 @@ export class Agent {
   private snapshotTimer: NodeJS.Timeout | null = null;
   private housekeeping: NodeJS.Timeout | null = null;
   private quitting = false;
+  private readonly updater: Updater;
+  /** When the popup was last opened; updates wait until it has been idle a while. */
+  private lastPopupAt: number | null = null;
 
   constructor(private readonly platform: Platform) {
     mkdirSync(userDir(), { recursive: true });
@@ -136,6 +141,21 @@ export class Agent {
     this.shortcuts = new Shortcuts({
       summon: () => this.summon(),
       clear: () => this.clearFromShortcut(),
+    });
+
+    this.updater = new Updater({
+      channel: () => this.config.get().updates.channel,
+      isQuietMoment: () =>
+        isQuietMoment({
+          now: new Date(),
+          scene: this.machine.current.kind,
+          lastPopupAt: this.lastPopupAt,
+          quietHours: this.config.get().updates.quietHours,
+        }),
+      onChange: () => {
+        this.tray?.refresh();
+        this.pushSnapshot();
+      },
     });
   }
 
@@ -189,6 +209,9 @@ export class Agent {
       clear: () => this.clearFromShortcut(),
       togglePause: () => this.togglePause(),
       isPaused: () => this.shortcuts.isPaused,
+      update: () => this.updater.current,
+      checkUpdates: () => void this.checkUpdatesFromTray(),
+      installUpdate: () => this.installUpdate(),
       quit: () => app.quit(),
     });
     this.shortcuts.apply(config.shortcuts);
@@ -196,6 +219,8 @@ export class Agent {
     this.applyLoginItem(config);
 
     powerMonitor.on('resume', () => this.shortcuts.apply(this.config.get().shortcuts));
+    if (this.state.get('seenVersion') === undefined) this.state.set('seenVersion', app.getVersion());
+    this.updater.start();
     this.housekeeping = setInterval(() => this.tidyHistory(), 6 * 3_600_000);
 
     if (!options.hidden || !this.state.get('onboardingCompleted')) this.main.show();
@@ -209,6 +234,7 @@ export class Agent {
     if (this.quitting) return;
     this.quitting = true;
     if (this.housekeeping) clearInterval(this.housekeeping);
+    this.updater.stop();
     this.shortcuts.dispose();
     this.machine.dispose();
     await this.displays.dispose();
@@ -244,6 +270,7 @@ export class Agent {
 
   private summon(): void {
     if (!this.popup) return;
+    this.lastPopupAt = Date.now();
     const config = this.config.get();
     const pay = this.machine.pay;
     const info: PopupOpenInfo = {
@@ -271,6 +298,42 @@ export class Agent {
     this.toast?.show({ text: t(this.shortcuts.isPaused ? 'toast.shortcutsPaused' : 'toast.shortcutsResumed'), tone: 'info' });
     this.tray?.refresh();
     this.pushSnapshot();
+  }
+
+  // ---------- Updates ----------
+
+  private async checkUpdatesFromTray(): Promise<void> {
+    const state = await this.updater.check();
+    const key =
+      state.status === 'latest'
+        ? 'toast.upToDate'
+        : state.status === 'downloading' || state.status === 'checking'
+          ? 'toast.updateDownloading'
+          : state.status === 'ready'
+            ? 'toast.updateReady'
+            : 'toast.updateFailed';
+    this.toast?.show({ text: t(key, { version: state.version ?? '' }), tone: state.status === 'error' ? 'warn' : 'info' });
+  }
+
+  /** User-asked restart into the update. Never while a customer is looking at a QR. */
+  private installUpdate(): boolean {
+    if (this.machine.current.kind === 'pay') {
+      this.toast?.show({ text: t('toast.updateAfterQr'), tone: 'warn' });
+      return false;
+    }
+    return this.updater.install();
+  }
+
+  /** The GitHub releases page, from the repository field of the app's package.json. */
+  private releaseUrl(version: string): string | null {
+    try {
+      const pkg = JSON.parse(readFileSync(join(app.getAppPath(), 'package.json'), 'utf8')) as { repository?: string | { url?: string } };
+      const repository = typeof pkg.repository === 'string' ? pkg.repository : pkg.repository?.url;
+      const match = repository ? /github(?:\.com[/:]|:)([\w.-]+\/[\w.-]+?)(?:\.git)?$/.exec(repository) : null;
+      return match ? `https://github.com/${match[1]}/releases/tag/v${version}` : null;
+    } catch {
+      return null;
+    }
   }
 
   // ---------- Config, content and displays ----------
@@ -449,6 +512,11 @@ export class Agent {
       lanUrls: this.lanServer.running ? LanServer.urls() : [],
       serverError: this.serverError,
       monitors: listMonitors(),
+      update: this.updater.current,
+      whatsNew:
+        this.state.get('seenVersion') && this.state.get('seenVersion') !== app.getVersion()
+          ? { version: app.getVersion(), url: this.releaseUrl(app.getVersion()) }
+          : null,
     };
   }
 
@@ -546,6 +614,13 @@ export class Agent {
       } catch (error) {
         return { restored: false, error: (error as Error).message };
       }
+    });
+
+    handle(IPC.updateCheck, () => this.updater.check());
+    handle(IPC.updateInstall, () => this.installUpdate());
+    handle(IPC.whatsNewDismiss, () => {
+      this.state.set('seenVersion', app.getVersion());
+      this.pushSnapshot();
     });
 
     handle(IPC.historyQuery, (filter: HistoryFilter) => this.historyPage(filter ?? {}));

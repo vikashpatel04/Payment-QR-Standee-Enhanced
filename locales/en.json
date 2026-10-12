@@ -38,7 +38,12 @@
     "cleared": "QR cleared",
     "nothingToClear": "No QR showing",
     "shortcutsPaused": "Shortcuts paused",
-    "shortcutsResumed": "Shortcuts on"
+    "shortcutsResumed": "Shortcuts on",
+    "upToDate": "Counter Pay is up to date",
+    "updateDownloading": "Downloading the update…",
+    "updateReady": "Update v{{version}} is ready",
+    "updateFailed": "Couldn't check for updates",
+    "updateAfterQr": "Clear the QR first, then update"
   },
   "tray": {
     "tooltip": "Counter Pay",
@@ -47,7 +52,9 @@
     "clear": "Clear",
     "pause": "Pause shortcuts",
     "updates": "Check for updates",
-    "quit": "Quit"
+    "quit": "Quit",
+    "updateReady": "Update ready",
+    "restart": "Restart to update (v{{version}})"
   },
   "history": {
     "csv": {
@@ -250,7 +257,6 @@
       "days_one": "{{count}} day",
       "days_other": "{{count}} days",
       "updates": "Update channel",
-      "phase3": "Automatic updates arrive in Phase 3.",
       "stable": "Stable",
       "beta": "Beta",
       "advanced": "Advanced",
@@ -340,6 +346,29 @@
         "mixed": "In some apps"
       },
       "skip": "Skip for now"
+    },
+    "update": {
+      "title": "Updates",
+      "version": "This is version {{version}}.",
+      "status": {
+        "disabled": "Updates work in the installed app, not in a development build.",
+        "idle": "Not checked yet",
+        "checking": "Checking for updates…",
+        "downloading": "Downloading v{{version}} ({{percent}}%)",
+        "ready": "v{{version}} is ready. It installs in quiet hours, or when you quit.",
+        "latest": "Up to date (v{{version}})",
+        "error": "Couldn't check for updates: {{error}}"
+      },
+      "check": "Check now",
+      "restart": "Restart to update",
+      "busy": "Clear the QR first",
+      "sidebar": "Restart to update to v{{version}}",
+      "quietHours": "Quiet hours",
+      "quietHint": "A downloaded update installs by itself in these hours when no QR is showing. It never restarts during billing.",
+      "channelHint": "Beta gets new versions first.",
+      "whatsNew": "Counter Pay was updated to v{{version}}.",
+      "whatsNewLink": "What's new",
+      "dismiss": "Dismiss"
     }
   }
 }

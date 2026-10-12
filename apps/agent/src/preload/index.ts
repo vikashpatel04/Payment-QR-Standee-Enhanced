@@ -31,6 +31,11 @@ const api: CounterPayApi = {
     pickImage: () => ipcRenderer.invoke(IPC.pickImage),
     backupConfig: () => ipcRenderer.invoke(IPC.backupConfig),
     restoreConfig: () => ipcRenderer.invoke(IPC.restoreConfig),
+    updates: {
+      check: () => ipcRenderer.invoke(IPC.updateCheck),
+      install: () => ipcRenderer.invoke(IPC.updateInstall),
+      dismissWhatsNew: () => ipcRenderer.invoke(IPC.whatsNewDismiss),
+    },
     history: {
       query: (filter) => ipcRenderer.invoke(IPC.historyQuery, filter),
       exportCsv: (filter) => ipcRenderer.invoke(IPC.historyExport, filter),

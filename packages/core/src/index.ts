@@ -10,4 +10,5 @@ export * from './refs';
 export * from './scenes';
 export * from './shortcuts';
 export * from './state';
+export * from './updates';
 export * from './upi';

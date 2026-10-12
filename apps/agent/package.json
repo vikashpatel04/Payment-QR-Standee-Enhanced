@@ -6,6 +6,8 @@
   "description": "Counter Pay: show a fixed-amount UPI QR on a customer display with one shortcut.",
   "author": "Counter Pay contributors",
   "license": "MIT",
+  "repository": "github:vikashpatel04/Payment-QR-Standee-Enhanced",
+  "homepage": "https://github.com/vikashpatel04/Payment-QR-Standee-Enhanced",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -18,6 +20,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
+    "electron-updater": "^6.8.9",
     "i18next": "^26.4.4",
     "koffi": "^3.3.3",
     "ws": "^8.22.0"

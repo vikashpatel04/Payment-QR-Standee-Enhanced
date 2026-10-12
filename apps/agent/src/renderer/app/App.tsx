@@ -1,6 +1,7 @@
 import type { AppSnapshot } from '@shared/api';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { api } from '../shared/api';
 import { useLanguage } from '../shared/i18n';
 import styles from './app.module.css';
 import { Icon, type IconName, Mark } from './components/Icon';
@@ -60,6 +61,17 @@ function Sidebar({ page, go, snapshot }: { page: Page; go: (page: Page) => void;
               <span>{t('app.home.clear')}</span>
             </div>
           </>
+        )}
+        {snapshot.update.status === 'ready' && (
+          <button
+            type="button"
+            className={styles.update}
+            disabled={snapshot.scene.kind === 'pay'}
+            title={snapshot.scene.kind === 'pay' ? t('app.update.busy') : undefined}
+            onClick={() => void api.app.updates.install()}
+          >
+            {t('app.update.sidebar', { version: snapshot.update.version ?? '' })}
+          </button>
         )}
         <div className={styles.version}>v{snapshot.version}</div>
       </div>

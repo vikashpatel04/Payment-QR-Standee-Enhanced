@@ -77,6 +77,18 @@ export interface SceneView {
   endsAt?: number;
 }
 
+export type UpdateStatus = 'disabled' | 'idle' | 'checking' | 'downloading' | 'ready' | 'latest' | 'error';
+
+/** Automatic updates from GitHub Releases. `disabled` in a development build. */
+export interface UpdateState {
+  status: UpdateStatus;
+  /** The version being downloaded or ready to install. */
+  version?: string;
+  percent?: number;
+  error?: string;
+  checkedAt?: number;
+}
+
 export interface AppSnapshot {
   version: string;
   config: CounterPayConfig;
@@ -90,6 +102,9 @@ export interface AppSnapshot {
   lanUrls: string[];
   serverError: string | null;
   monitors: MonitorInfo[];
+  update: UpdateState;
+  /** Set after an update installed, until the shop dismisses it. */
+  whatsNew: { version: string; url: string | null } | null;
 }
 
 export interface HistoryFilter {
@@ -145,6 +160,12 @@ export interface CounterPayApi {
     pickImage(): Promise<string | null>;
     backupConfig(): Promise<{ saved: boolean; path?: string }>;
     restoreConfig(): Promise<{ restored: boolean; error?: string }>;
+    updates: {
+      check(): Promise<UpdateState>;
+      /** Restarts into the downloaded update. Refused while a QR is showing. */
+      install(): Promise<boolean>;
+      dismissWhatsNew(): Promise<void>;
+    };
     history: {
       query(filter: HistoryFilter): Promise<HistoryPage>;
       exportCsv(filter: HistoryFilter): Promise<{ saved: boolean; path?: string }>;
@@ -180,6 +201,9 @@ export const IPC = {
   pickImage: 'app:pick-image',
   backupConfig: 'app:backup-config',
   restoreConfig: 'app:restore-config',
+  updateCheck: 'update:check',
+  updateInstall: 'update:install',
+  whatsNewDismiss: 'update:whats-new-dismiss',
   historyQuery: 'history:query',
   historyExport: 'history:export',
   historyReshow: 'history:reshow',

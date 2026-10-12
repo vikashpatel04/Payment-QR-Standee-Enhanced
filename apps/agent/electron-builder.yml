@@ -28,7 +28,8 @@ win:
       arch: [x64]
   icon: resources/icons/icon.ico
   artifactName: counter-pay-setup-${version}.${ext}
-  # TODO(phase-3): sign the installer and every update (SignPath Foundation or Azure Trusted Signing).
+  # TODO: sign the installer and every update (SignPath Foundation or Azure Trusted Signing). Until then
+  # Windows SmartScreen warns on first install, and electron-updater skips signature checks (SHA-512 still applies).
 nsis:
   oneClick: true
   perMachine: false
@@ -37,5 +38,10 @@ nsis:
   createDesktopShortcut: false
   createStartMenuShortcut: true
   shortcutName: Counter Pay
-# TODO(phase-3): GitHub Releases feed for electron-updater.
-publish: null
+# electron-updater reads new versions from this repository's GitHub Releases. Each release
+# carries the installer, its .blockmap (for differential downloads) and latest.yml (version + SHA-512).
+publish:
+  provider: github
+  owner: vikashpatel04
+  repo: Payment-QR-Standee-Enhanced
+  releaseType: release

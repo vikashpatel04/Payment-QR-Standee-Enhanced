@@ -47,6 +47,21 @@ export function Home({ snapshot, go }: { snapshot: AppSnapshot; go: (page: Page)
         <SceneBadge snapshot={snapshot} />
       </header>
 
+      {snapshot.whatsNew && (
+        <div className={styles.whatsNew}>
+          <span>{t('app.update.whatsNew', { version: snapshot.whatsNew.version })}</span>
+          <div className={ui.row}>
+            {snapshot.whatsNew.url && (
+              <a className={ui.button} href={snapshot.whatsNew.url} target="_blank" rel="noreferrer">
+                {t('app.update.whatsNewLink')}
+              </a>
+            )}
+            <button type="button" className={ui.ghost} onClick={() => void api.app.updates.dismissWhatsNew()}>
+              {t('app.update.dismiss')}
+            </button>
+          </div>
+        </div>
+      )}
       {snapshot.serverError && <div className={ui.bannerBad}>{snapshot.serverError}</div>}
       {!snapshot.payee && (
         <div className={ui.bannerBad}>

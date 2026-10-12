@@ -40,6 +40,22 @@
   font-size: 13px;
 }
 
+.whatsNew {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.whatsNew a {
+  text-decoration: none;
+}
+
 /* ---------- History ---------- */
 
 .filters {

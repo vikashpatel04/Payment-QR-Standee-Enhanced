@@ -6,6 +6,14 @@ Customers who scan an open standee QR type the amount themselves, and short paym
 
 > **Status:** Phase 1 (desktop app MVP) is in progress. Windows 10 and 11, x64.
 
+## Install
+
+1. Download `counter-pay-setup-<version>.exe` from [Releases](https://github.com/vikashpatel04/Payment-QR-Standee-Enhanced/releases/latest) and run it. It installs for your Windows user only, with no admin prompt.
+2. The installer isn't code-signed yet, so Windows may show "Windows protected your PC". Choose **More info → Run anyway**.
+3. First-run setup takes about 3 minutes: import your merchant standee QR, check the shortcuts, pick a display, and do the ₹1 test.
+
+Counter Pay updates itself from GitHub Releases. Updates download in the background and install only when the counter is quiet (10 pm–8 am by default, no QR showing) or when you quit. See [docs/RELEASING.md](docs/RELEASING.md) for publishing a new version.
+
 ## How it works at the counter
 
 1. Ring up the bill as usual. The customer says "UPI".
@@ -66,7 +74,7 @@ packages/plugins/    point-of-sale trigger interface; BNeeds watcher in Phase 4
 apps/agent/          the Electron app: tray agent, popup, toast, main window, local server, History
 apps/display/        the customer display page, used by every browser-based display
 locales/             app text (English, Tamil) and display text (English + 10 Indian languages)
-docs/                CONTRIBUTING.md, SECURITY.md
+docs/                CONTRIBUTING.md, SECURITY.md, RELEASING.md
 ```
 
 ## Privacy and safety

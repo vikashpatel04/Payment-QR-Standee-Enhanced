@@ -1,5 +1,6 @@
 import { formatINR, APP_LANGUAGES } from '@counterpay/core';
-import type { AppSnapshot } from '@shared/api';
+import type { AppSnapshot, UpdateState } from '@shared/api';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../shared/api';
@@ -40,6 +41,82 @@ function RefPrefix({ value }: { value: string }) {
     if (prefix) updateConfig({ pay: { refPrefix: prefix } });
   });
   return <input className={ui.input} style={{ width: 90, textTransform: 'uppercase' }} maxLength={6} {...draft} />;
+}
+
+function updateLine(t: TFunction, update: UpdateState, version: string): string {
+  switch (update.status) {
+    case 'disabled':
+      return t('app.update.status.disabled');
+    case 'checking':
+      return t('app.update.status.checking');
+    case 'downloading':
+      return t('app.update.status.downloading', { version: update.version ?? '', percent: update.percent ?? 0 });
+    case 'ready':
+      return t('app.update.status.ready', { version: update.version ?? '' });
+    case 'latest':
+      return t('app.update.status.latest', { version });
+    case 'error':
+      return t('app.update.status.error', { error: update.error ?? '' });
+    default:
+      return t('app.update.status.idle');
+  }
+}
+
+/** App updates from GitHub Releases: they download by themselves and install only when the counter is quiet. */
+function UpdatesCard({ snapshot }: { snapshot: AppSnapshot }) {
+  const { t } = useTranslation();
+  const { config, update, scene } = snapshot;
+  const [start, end] = config.updates.quietHours;
+  const setQuiet = (index: 0 | 1, value: string) => {
+    if (!/^\d{2}:\d{2}$/.test(value)) return;
+    const next: [string, string] = [start, end];
+    next[index] = value;
+    updateConfig({ updates: { quietHours: next } });
+  };
+  return (
+    <section className={ui.card}>
+      <h2 className={ui.cardTitle}>{t('app.update.title')}</h2>
+      <Setting name={updateLine(t, update, snapshot.version)} hint={t('app.update.version', { version: snapshot.version })}>
+        {update.status === 'ready' ? (
+          <button
+            type="button"
+            className={ui.primary}
+            disabled={scene.kind === 'pay'}
+            title={scene.kind === 'pay' ? t('app.update.busy') : undefined}
+            onClick={() => void api.app.updates.install()}
+          >
+            {t('app.update.restart')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={ui.button}
+            disabled={update.status === 'disabled' || update.status === 'checking' || update.status === 'downloading'}
+            onClick={() => void api.app.updates.check()}
+          >
+            {t('app.update.check')}
+          </button>
+        )}
+      </Setting>
+      <Setting name={t('app.update.quietHours')} hint={t('app.update.quietHint')}>
+        <div className={ui.row}>
+          <input className={ui.input} type="time" value={start} onChange={(e) => setQuiet(0, e.target.value)} aria-label={t('app.history.from')} />
+          <span className={ui.muted}>–</span>
+          <input className={ui.input} type="time" value={end} onChange={(e) => setQuiet(1, e.target.value)} aria-label={t('app.history.to')} />
+        </div>
+      </Setting>
+      <Setting name={t('app.settings.updates')} hint={t('app.update.channelHint')}>
+        <select
+          className={ui.select}
+          value={config.updates.channel}
+          onChange={(e) => updateConfig({ updates: { channel: e.target.value === 'beta' ? 'beta' : 'stable' } })}
+        >
+          <option value="stable">{t('app.settings.stable')}</option>
+          <option value="beta">{t('app.settings.beta')}</option>
+        </select>
+      </Setting>
+    </section>
+  );
 }
 
 export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
@@ -144,13 +221,9 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
             ))}
           </select>
         </Setting>
-        <Setting name={t('app.settings.updates')} hint={t('app.settings.phase3')}>
-          <select className={ui.select} value={config.updates.channel} disabled>
-            <option value="stable">{t('app.settings.stable')}</option>
-            <option value="beta">{t('app.settings.beta')}</option>
-          </select>
-        </Setting>
       </section>
+
+      <UpdatesCard snapshot={snapshot} />
 
       <section className={ui.card}>
         <h2 className={ui.cardTitle}>{t('app.settings.advanced')}</h2>

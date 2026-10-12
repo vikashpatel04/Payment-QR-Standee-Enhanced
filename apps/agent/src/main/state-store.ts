@@ -7,6 +7,8 @@ interface AgentState {
   lastAmountPaise?: number;
   onboardingCompleted?: boolean;
   amountLockTest?: AmountLockTest;
+  /** The app version the shop last saw "What's new" for. */
+  seenVersion?: string;
   /** Paired Wi-Fi displays: token → the display and the pairing code it was issued for. */
   webTokens?: Record<string, { id: string; code: string }>;
 }
