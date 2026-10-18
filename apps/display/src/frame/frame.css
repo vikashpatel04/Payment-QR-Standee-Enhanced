@@ -25,8 +25,16 @@ body,
 }
 
 .line {
+  display: flex;
+  justify-content: center;
   overflow: hidden;
   white-space: nowrap;
+}
+
+/* Centred even while too wide, so narrowing it (scaleX) keeps it in the middle. */
+.line > span {
+  flex: none;
+  transform-origin: center;
 }
 
 .center {
@@ -80,15 +88,10 @@ body,
   text-align: center;
 }
 
-.lines {
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  line-height: 1.15;
-}
-
 .rule {
-  flex: none;
-  width: 100%;
+  position: absolute;
+  left: 3px;
+  right: 3px;
   height: 1px;
   background: #000;
 }
