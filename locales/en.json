@@ -207,7 +207,7 @@
           "key": "This display is paired with another PC. Reset it first (see HARDWARE.md).",
           "busy": "The display is busy. Try again in a moment.",
           "unreachable": "Couldn't reach it. Check the address and that it's on the same network as this PC.",
-          "address": "That doesn't look like an address. Use a name like raspberrypi.local or an address like 192.168.0.50."
+          "address": "That doesn't look like an address. Use a name like raspberrypi.local or an address like 192.168.1.20."
         }
       },
       "usbPanelSilent": "The board is on {{port}}, but its panel isn't drawing. Check the wires to the panel, especially VCC, GND and BUSY (see HARDWARE.md).",

@@ -92,7 +92,7 @@ describe('SerialFrameDriver', () => {
     renders = [];
     opened = [];
     ports = {
-      detect: async () => 'COM4',
+      detect: async () => 'COM3',
       open: async (path) => {
         opened.push(path);
         return board;
@@ -104,9 +104,9 @@ describe('SerialFrameDriver', () => {
     const driver = make();
     await driver.connect();
     await flush();
-    expect(opened).toEqual(['COM4']);
+    expect(opened).toEqual(['COM3']);
     expect(board.written[0]).toBe('{"v":1,"t":"who"}\n');
-    expect(driver.status()).toMatchObject({ state: 'connected', clients: 1, fw: '1.0.0', size: { w: 250, h: 122 }, port: 'COM4' });
+    expect(driver.status()).toMatchObject({ state: 'connected', clients: 1, fw: '1.0.0', size: { w: 250, h: 122 }, port: 'COM3' });
   });
 
   it('reports a board whose panel is not drawing as offline, and fails its acks', async () => {
@@ -114,7 +114,7 @@ describe('SerialFrameDriver', () => {
     const driver = make();
     await driver.connect();
     await flush();
-    expect(driver.status()).toMatchObject({ state: 'offline', detail: 'panelSilent', port: 'COM4', fw: '1.0.0' });
+    expect(driver.status()).toMatchObject({ state: 'offline', detail: 'panelSilent', port: 'COM3', fw: '1.0.0' });
     expect(await driver.show(pay())).toMatchObject({ ok: false, reason: 'panelSilent' });
 
     // Rewired: the next full refresh works and the display is back.
@@ -212,7 +212,7 @@ describe('SerialFrameDriver', () => {
     expect(driver.status().detail).toBe('linkLost');
 
     board = new FakeBoard();
-    ports.detect = async () => 'COM4';
+    ports.detect = async () => 'COM3';
     clock.advance(3_000);
     await flush();
     expect(driver.status().state).toBe('connected');

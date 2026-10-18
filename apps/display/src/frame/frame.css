@@ -31,6 +31,24 @@ body,
   white-space: nowrap;
 }
 
+/* Shop names wrap only at spaces, never inside a word, and are narrowed rather than split. */
+.name {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.nameText {
+  flex: none;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  transform-origin: center top;
+}
+
 /* Centred even while too wide, so narrowing it (scaleX) keeps it in the middle. */
 .line > span {
   flex: none;

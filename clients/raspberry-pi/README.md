@@ -6,12 +6,14 @@ Tested hardware: Raspberry Pi Zero 2 W (Raspberry Pi OS based on Debian 13) with
 
 ## Install
 
-On the Pi (Raspberry Pi OS, with the HAT on the 40-pin header and the Pi on the same network as the Counter Pay PC):
+On the Pi (Raspberry Pi OS, with the HAT on the 40-pin header and the Pi on the same network as the Counter Pay PC), get this repository (its address is under **Code** on its GitHub page) and run the installer:
 
 ```bash
-git clone --depth 1 https://github.com/vikashpatel04/Payment-QR-Standee-Enhanced
+git clone --depth 1 <repository address>
 bash Payment-QR-Standee-Enhanced/clients/raspberry-pi/install.sh --panel epd2in13_V4 --rotation 90
 ```
+
+Or copy just this folder to the Pi from your PC: `scp -r clients/raspberry-pi <user>@<pi-name>.local:counterpay-display`, then run `bash counterpay-display/install.sh …` on the Pi.
 
 - `--panel` is Waveshare's driver for your panel: `epd2in13_V4` (2.13" black and white), `epd2in13b_V4` (2.13" with red), `epd4in2_V2`, `epd7in5_V2`… The installer lists the others if the name is wrong.
 - `--rotation 90` for a panel standing upright like a standee, `0` for wide.

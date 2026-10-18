@@ -41,7 +41,7 @@ describe('Wi-Fi display messages', () => {
     expect(isPairingCode('482913')).toBe(true);
     expect(isPairingCode('48291')).toBe(false);
     expect(isPairingCode('48291a')).toBe(false);
-    expect(splitAddress('192.168.0.50')).toEqual({ host: '192.168.0.50', port: 5181 });
+    expect(splitAddress('192.168.1.20')).toEqual({ host: '192.168.1.20', port: 5181 });
     expect(splitAddress(' counter.local:6000 ')).toEqual({ host: 'counter.local', port: 6000 });
     // Copied from an SSH command: the user name is ignored.
     expect(splitAddress('pi@counter.local')).toEqual({ host: 'counter.local', port: 5181 });
@@ -75,7 +75,7 @@ describe('the standee slide', () => {
 describe('Wi-Fi display settings', () => {
   it('keep the display id, address and key', () => {
     const config = normalizeConfig(
-      { displays: [{ id: 'wifi-1', driver: 'wifi-frame', enabled: true, device: 'a1b2c3', address: '192.168.0.50:5181', key: 'f'.repeat(64), rotation: 90 }] },
+      { displays: [{ id: 'wifi-1', driver: 'wifi-frame', enabled: true, device: 'a1b2c3', address: '192.168.1.20:5181', key: 'f'.repeat(64), rotation: 90 }] },
       secrets,
     );
     expect(config.displays).toContainEqual({
@@ -83,7 +83,7 @@ describe('Wi-Fi display settings', () => {
       driver: 'wifi-frame',
       enabled: true,
       device: 'a1b2c3',
-      address: '192.168.0.50:5181',
+      address: '192.168.1.20:5181',
       key: 'f'.repeat(64),
       rotation: 90,
     });

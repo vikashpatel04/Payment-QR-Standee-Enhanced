@@ -72,11 +72,11 @@ An ESP32 board can't plug straight into this socket: it is laid out for a Raspbe
 Flashing replaces whatever program is on the board.
 
 1. Install [PlatformIO Core](https://docs.platformio.org/en/latest/core/installation/index.html) (or the PlatformIO extension for VS Code).
-2. Plug the board in and find its port in Device Manager → **Ports (COM & LPT)**, e.g. `USB-SERIAL CH340 (COM4)`. No port? Install the driver for the board's USB chip (CH340 or CP210x).
+2. Plug the board in and find its port in Device Manager → **Ports (COM & LPT)**, e.g. `USB-SERIAL CH340 (COM3)`. No port? Install the driver for the board's USB chip (CH340 or CP210x).
 3. From `firmware/frame-generic`, run the environment for your panel:
 
    ```bash
-   pio run -e esp32-waveshare-2in13-v4 -t upload --upload-port COM4
+   pio run -e esp32-waveshare-2in13-v4 -t upload --upload-port COM3
    ```
 
 4. If the upload stops at `Connecting...`, hold the board's **BOOT** button until it starts writing.

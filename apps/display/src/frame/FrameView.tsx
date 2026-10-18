@@ -128,13 +128,49 @@ function QrScreen({ input, uri, children }: { input: FrameInput; uri: string | u
   );
 }
 
-/** The shop name: always one line, the font shrinking as far as it must. Never wrapped. */
-function ShopName({ name, max }: { name: string | undefined; max: number }) {
+const NAME_LINE_HEIGHT = 1.15;
+
+/**
+ * The shop name: up to two lines, broken only between words and never inside one
+ * ("Sri Lakshmi / Textiles", never "Sri Lakshm / i"). The font shrinks until every word fits
+ * on its line; a single word too wide even then is narrowed rather than split.
+ */
+function ShopName({ name, max, lines = 2 }: { name: string | undefined; max: number; lines?: number }) {
+  const box = useRef<HTMLDivElement>(null);
+  const text = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = box.current;
+    const inner = text.current;
+    if (!el || !inner) return;
+    const min = Math.min(max, 9);
+    let size = max;
+    let squeeze = 1;
+    const apply = () => {
+      el.style.fontSize = `${size}px`;
+      el.style.fontWeight = squeeze < 1 ? '800' : '700';
+      // Narrowing: lay the words out in a wider box, then scale it back to the real width.
+      inner.style.width = `${100 / squeeze}%`;
+      inner.style.transform = squeeze < 1 ? `scaleX(${squeeze})` : '';
+    };
+    const fits = () =>
+      inner.scrollWidth <= inner.clientWidth && inner.scrollHeight <= Math.ceil(size * NAME_LINE_HEIGHT * lines) + 1;
+    apply();
+    while (size > min && !fits()) {
+      size -= 1;
+      apply();
+    }
+    while (squeeze > 0.5 && !fits()) {
+      squeeze -= 0.05;
+      apply();
+    }
+  });
   if (!name) return null;
   return (
-    <Fit max={max} min={8} weight={700}>
-      {name}
-    </Fit>
+    <div ref={box} className="name" style={{ fontSize: max, fontWeight: 700, lineHeight: NAME_LINE_HEIGHT }}>
+      <div ref={text} className="nameText">
+        {name}
+      </div>
+    </div>
   );
 }
 

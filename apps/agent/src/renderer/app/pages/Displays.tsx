@@ -212,7 +212,7 @@ function WifiPairing({ onClose }: { onClose: () => void }) {
         <div className={ui.row} style={{ alignItems: 'flex-end' }}>
           <label className={ui.field}>
             <span className={ui.label}>{t('app.displays.wifi.address')}</span>
-            <input className={ui.input} value={address} placeholder="raspberrypi.local or 192.168.0.50" onChange={(e) => setAddress(e.target.value)} />
+            <input className={ui.input} value={address} placeholder="raspberrypi.local or 192.168.1.20" onChange={(e) => setAddress(e.target.value)} />
           </label>
           <label className={ui.field}>
             <span className={ui.label}>{t('app.displays.wifi.code')}</span>
