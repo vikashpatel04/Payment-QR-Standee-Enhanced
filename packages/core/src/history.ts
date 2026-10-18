@@ -69,7 +69,7 @@ function cell(value: string): string {
 }
 
 /**
- * CSV that opens correctly in Excel: UTF-8 with a BOM (so ₹ and Tamil survive)
+ * CSV that opens correctly in Excel: UTF-8 with a BOM (so ₹ and Indian scripts survive)
  * and CRLF line ends. Text that Excel would run as a formula is defused with a `'`.
  */
 export function historyToCsv(events: QrEvent[], labels: CsvLabels, format: CsvFormat): string {

@@ -3,6 +3,8 @@ out/
 dist/
 release/
 coverage/
+# PlatformIO build output
+.pio/
 *.log
 .DS_Store
 Thumbs.db

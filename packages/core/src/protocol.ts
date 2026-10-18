@@ -21,7 +21,8 @@ export type WireAmbientItem =
   | { k: 'logo' }
   | ({ k: 'rating'; url: string } & WireText)
   | ({ k: 'text' } & WireText)
-  | { k: 'image'; src: string };
+  | { k: 'image'; src: string }
+  | ({ k: 'standee' } & WireText);
 
 export interface PayMessage {
   v: 1;
@@ -67,9 +68,15 @@ export interface ContentMessage {
   langs: string[];
   thanks: number;
   rating?: string;
+  /** The shop's standee QR (no amount), for the standee slide. */
+  standee?: string;
 }
 
-/** Phase 2. Followed by `len` raw bytes, then the device's ack. */
+/**
+ * Frame-mode devices: followed by `len` raw bytes (see frame.ts), then the device's ack.
+ * `scene` and `ttl` let the device enforce the safety rules itself: it keeps the last
+ * Ambient frame and falls back to it when a pay frame's ttl runs out or the PC goes quiet.
+ */
 export interface FrameMessage {
   v: 1;
   t: 'frame';
@@ -79,6 +86,17 @@ export interface FrameMessage {
   fmt: '1bpp' | '2bpp' | 'rgb565';
   len: number;
   refresh: 'full' | 'partial';
+  scene?: SceneKind;
+  /** Seconds a pay frame may stay up. */
+  ttl?: number;
+  /** How the panel is mounted. */
+  rot?: 0 | 90 | 180 | 270;
+}
+
+/** Asks a device to send its hello, for boards that don't reset when the port opens. */
+export interface WhoMessage {
+  v: 1;
+  t: 'who';
 }
 
 /** Shows a test pattern (size, orientation, colour bars) for a few seconds, then the scene again. */
@@ -96,7 +114,8 @@ export type PcMessage =
   | PingMessage
   | ContentMessage
   | FrameMessage
-  | TestMessage;
+  | TestMessage
+  | WhoMessage;
 
 export interface HelloMessage {
   t: 'hello';
@@ -107,12 +126,16 @@ export interface HelloMessage {
   vpa?: string;
   /** A preset profile id, when the device knows its panel. */
   profile?: string;
+  /** Frame boards: `silent` when the panel didn't answer its last full refresh (wiring or power). */
+  panel?: string;
 }
 
 export interface AckMessage {
   t: 'ack';
   seq: number;
   scene: SceneKind;
+  /** Frame boards: `silent` when the panel didn't answer, so nothing was drawn. */
+  panel?: string;
 }
 
 export interface StateMessage {
@@ -170,6 +193,8 @@ export function toWirePlaylist(items: AmbientItem[]): WireAmbientItem[] {
         return { ...item.text, k: 'text' };
       case 'image':
         return { k: 'image', src: item.src };
+      case 'standee':
+        return { ...(item.text ?? {}), k: 'standee' };
     }
   });
 }
@@ -189,6 +214,10 @@ export function fromWirePlaylist(items: WireAmbientItem[]): AmbientItem[] {
       }
       case 'image':
         return [{ k: 'image', src: item.src }];
+      case 'standee': {
+        const { k: _k, ...text } = item;
+        return [Object.keys(text).length ? { k: 'standee', text: text as WireText } : { k: 'standee' }];
+      }
       default:
         return [];
     }
@@ -207,6 +236,7 @@ export function contentToMessages(content: DisplayContent): [ContentMessage, Pla
   };
   if (content.logoUrl) message.logo = content.logoUrl;
   if (content.thanks.ratingUrl) message.rating = content.thanks.ratingUrl;
+  if (content.standeeUri) message.standee = content.standeeUri;
   return [
     message,
     { v: 1, t: 'playlist', items: toWirePlaylist(content.ambient.items), slide: content.ambient.slideSeconds },
@@ -238,6 +268,8 @@ function isWireItem(value: unknown): value is WireAmbientItem {
       return isStringRecord(value, ['k']);
     case 'image':
       return typeof value.src === 'string';
+    case 'standee':
+      return isStringRecord(value, ['k']);
     default:
       return false;
   }
@@ -251,9 +283,11 @@ export function parseDisplayMessage(value: unknown): DisplayMessage | null {
       if (typeof value.fw !== 'string' || !isCount(value.w) || !isCount(value.h)) return null;
       if (value.vpa !== undefined && typeof value.vpa !== 'string') return null;
       if (value.profile !== undefined && typeof value.profile !== 'string') return null;
+      if (value.panel !== undefined && typeof value.panel !== 'string') return null;
       return value as unknown as HelloMessage;
     case 'ack':
       if (!isCount(value.seq) || !SCENE_KINDS.includes(value.scene as string)) return null;
+      if (value.panel !== undefined && typeof value.panel !== 'string') return null;
       return value as unknown as AckMessage;
     case 'state':
       if (!SCENE_KINDS.includes(value.scene as string)) return null;
@@ -292,6 +326,8 @@ export function parsePcMessage(value: unknown): PcMessage | null {
       return value as unknown as FrameMessage;
     case 'test':
       return isCount(value.seq) && isCount(value.seconds) ? (value as unknown as TestMessage) : null;
+    case 'who':
+      return value as unknown as WhoMessage;
     default:
       return null;
   }
@@ -300,11 +336,18 @@ export function parsePcMessage(value: unknown): PcMessage | null {
 /**
  * Splits a byte stream into JSON lines. Partial lines are kept until their newline
  * arrives; lines that are too long or not JSON are reported and skipped.
+ *
+ * With `skipNoise`, a line that starts with garbage still yields the JSON object at its
+ * end. Serial links need this: an ESP32 prints its boot messages at another baud rate,
+ * and they arrive as noise on the same line as the board's first hello.
  */
 export class LineDecoder {
   private buffer = '';
 
-  constructor(private readonly onError: (reason: 'too-long' | 'bad-json', line: string) => void = () => {}) {}
+  constructor(
+    private readonly onError: (reason: 'too-long' | 'bad-json', line: string) => void = () => {},
+    private readonly options: { skipNoise?: boolean } = {},
+  ) {}
 
   push(chunk: string): unknown[] {
     this.buffer += chunk;
@@ -314,11 +357,9 @@ export class LineDecoder {
       const line = this.buffer.slice(0, newline).replace(/\r$/, '').trim();
       this.buffer = this.buffer.slice(newline + 1);
       if (line) {
-        try {
-          values.push(JSON.parse(line));
-        } catch {
-          this.onError('bad-json', line);
-        }
+        const value = this.parse(line);
+        if (value === undefined) this.onError('bad-json', line);
+        else values.push(value);
       }
       newline = this.buffer.indexOf('\n');
     }
@@ -327,5 +368,22 @@ export class LineDecoder {
       this.buffer = '';
     }
     return values;
+  }
+
+  private parse(line: string): unknown {
+    try {
+      return JSON.parse(line);
+    } catch {
+      if (!this.options.skipNoise) return undefined;
+    }
+    // Try each `{"` from the left: the first that parses to the end of the line is the message.
+    for (let at = line.indexOf('{"', 1); at !== -1; at = line.indexOf('{"', at + 1)) {
+      try {
+        return JSON.parse(line.slice(at));
+      } catch {
+        // Still noise; keep looking.
+      }
+    }
+    return undefined;
   }
 }

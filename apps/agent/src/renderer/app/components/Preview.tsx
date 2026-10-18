@@ -1,3 +1,4 @@
+import { getProfile } from '@counterpay/core';
 import type { AppSnapshot, DisplayView } from '@shared/api';
 import styles from './Preview.module.css';
 
@@ -15,6 +16,10 @@ function shape(view: DisplayView, snapshot: AppSnapshot): { w: number; h: number
   } else if (status.size) {
     w = status.size.w;
     h = status.size.h;
+  } else if (config.driver === 'serial-frame') {
+    const panel = getProfile(config.profile ?? 'waveshare-2in13-v4');
+    w = panel.w;
+    h = panel.h;
   }
   const turned = config.rotation === 90 || config.rotation === 270;
   return turned ? { w: h, h: w } : { w, h };
@@ -28,6 +33,18 @@ export function Preview({ view, snapshot, height = 200 }: { view: DisplayView; s
   if (!view.previewUrl) return <div className={styles.off} style={{ height, width: (height * 2) / 3 }} />;
   const { w, h } = shape(view, snapshot);
   const width = Math.round(Math.min(height * (w / h), height * 1.8));
+  if (view.config.driver === 'serial-frame') {
+    // An E-ink panel: the last frame it was sent, pixel for pixel. Wide panels are kept narrower.
+    const paperWidth = Math.round(Math.min(height * (w / h), height * 1.4));
+    const paperHeight = Math.round(paperWidth * (h / w));
+    return view.status.preview ? (
+      <div className={styles.paper} style={{ width: paperWidth, height: paperHeight }}>
+        <img className={styles.frameImage} src={view.status.preview} alt={view.config.name ?? view.config.id} />
+      </div>
+    ) : (
+      <div className={styles.off} style={{ width: paperWidth, height: paperHeight, alignSelf: 'center' }} />
+    );
+  }
   // The preview page renders unrotated; rotation is shown by the frame's shape.
   const url = view.previewUrl.replace(/&rotate=\d+/, '');
   return (

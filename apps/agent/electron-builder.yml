@@ -13,12 +13,16 @@ files:
   - '!node_modules/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*.node'
   - '!node_modules/better-sqlite3/prebuilds/win32-arm64.node'
   - '!node_modules/better-sqlite3/{deps,src}/**'
+  # The same for serialport: keep the Windows x64 prebuild only.
+  - '!node_modules/@serialport/bindings-cpp/prebuilds/{android,darwin,linux}-*/**'
+  - '!node_modules/@serialport/bindings-cpp/prebuilds/win32-{arm64,ia32}/**'
+  - '!node_modules/@serialport/bindings-cpp/{src,binding.gyp}'
 extraResources:
   - from: ../display/dist
     to: display
   - from: resources/icons
     to: icons
-# better-sqlite3 and koffi ship prebuilt Node-API binaries; nothing is rebuilt and no C++ toolchain is needed.
+# better-sqlite3, koffi and serialport ship prebuilt Node-API binaries; nothing is rebuilt and no C++ toolchain is needed.
 npmRebuild: false
 asarUnpack:
   - '**/*.node'

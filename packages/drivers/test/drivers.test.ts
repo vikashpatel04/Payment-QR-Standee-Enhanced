@@ -57,7 +57,7 @@ const content: DisplayContent = {
   shopName: 'YOUR SHOP',
   payeeLabel: 'YOUR SHOP',
   accent: '#14B37D',
-  languages: ['en', 'ta'],
+  languages: ['en', 'bn'],
   ambient: { slideSeconds: 8, items: [{ k: 'logo' }] },
   thanks: { seconds: 10 },
 };

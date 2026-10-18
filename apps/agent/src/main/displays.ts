@@ -1,12 +1,5 @@
 import { type DisplayConfig, type DisplayContent, EventHub, type Scene } from '@counterpay/core';
-import {
-  type Ack,
-  createDriver,
-  type DisplayDriver,
-  type DisplayLink,
-  type DriverStatus,
-  type WindowHost,
-} from '@counterpay/drivers';
+import { type Ack, createDriver, type DisplayDriver, type DisplayLink, type DriverDeps, type DriverStatus } from '@counterpay/drivers';
 import type { DisplayReach } from '../shared/api';
 
 interface Entry {
@@ -36,7 +29,7 @@ export class DisplayManager {
   private content: DisplayContent | null = null;
   private scene: Scene | null = null;
 
-  constructor(private readonly windowHost: WindowHost) {}
+  constructor(private readonly deps: DriverDeps) {}
 
   /** Brings the running drivers in line with the config: adds, removes and restarts as needed. */
   async sync(configs: DisplayConfig[]): Promise<void> {
@@ -53,7 +46,7 @@ export class DisplayManager {
 
     for (const [id, config] of wanted) {
       if (this.entries.has(id)) continue;
-      const driver = createDriver(config, { windowHost: this.windowHost });
+      const driver = createDriver(config, this.deps);
       const entry: Entry = {
         config,
         driver,

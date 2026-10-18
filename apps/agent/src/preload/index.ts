@@ -31,6 +31,12 @@ const api: CounterPayApi = {
     pickImage: () => ipcRenderer.invoke(IPC.pickImage),
     backupConfig: () => ipcRenderer.invoke(IPC.backupConfig),
     openLogs: () => ipcRenderer.send(IPC.openLogs),
+    listSerialPorts: () => ipcRenderer.invoke(IPC.listSerialPorts),
+    wifi: {
+      discover: () => ipcRenderer.invoke(IPC.wifiDiscover),
+      pair: (address, code) => ipcRenderer.invoke(IPC.wifiPair, address, code),
+      forget: (displayId) => ipcRenderer.invoke(IPC.wifiForget, displayId),
+    },
     restoreConfig: () => ipcRenderer.invoke(IPC.restoreConfig),
     updates: {
       check: () => ipcRenderer.invoke(IPC.updateCheck),

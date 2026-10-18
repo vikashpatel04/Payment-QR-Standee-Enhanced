@@ -5,16 +5,20 @@ import {
   type CsvLabels,
   dailyTotals,
   type DisplayConfig,
+  frameProfiles,
   type DisplayContent,
   historyToCsv,
+  isPairingCode,
   isPayeeConfigured,
   isQuietMoment,
   localDay,
   type PayeeInfo,
   type PaySource,
+  PROFILE_PRESETS,
   readPayee,
   type Scene,
   SceneMachine,
+  splitAddress,
   UpiError,
 } from '@counterpay/core';
 import type { DriverStatus } from '@counterpay/drivers';
@@ -32,15 +36,19 @@ import {
   type PopupOpenInfo,
   type SceneView,
   type SubmitResult,
+  type WifiDisplayFound,
+  type WifiPairResult,
 } from '../shared/api';
 import { secrets, ConfigStore } from './config-store';
 import { ElectronWindowHost, listMonitors } from './display-windows';
 import { DisplayManager, type ShowOutcome } from './displays';
+import { OffscreenFrameRenderer } from './frame-renderer';
+import { listPorts, serialPorts } from './serial-ports';
+import { discover, DisplayRefused, pair, unpair, wifiPorts } from './wifi-displays';
 import { HistoryDb } from './history';
 import { t } from './i18n';
 import { logDir } from './log';
-import { userDir } from './paths';
-import { displayPageDir } from './paths';
+import { displayPageDir, userDir } from './paths';
 import type { Platform } from './platform';
 import { LanServer, LocalServer } from './server';
 import { Shortcuts } from './shortcuts';
@@ -89,6 +97,7 @@ export class Agent {
   private readonly machine: SceneMachine;
   private readonly windowHost: ElectronWindowHost;
   private readonly displays: DisplayManager;
+  private readonly frames: OffscreenFrameRenderer;
   private readonly localServer: LocalServer;
   private readonly lanServer: LanServer;
   private readonly shortcuts: Shortcuts;
@@ -127,7 +136,11 @@ export class Agent {
     });
 
     this.windowHost = new ElectronWindowHost((id, rotation) => this.displayUrl(id, 'display', rotation));
-    this.displays = new DisplayManager(this.windowHost);
+    this.frames = new OffscreenFrameRenderer(
+      () => join(displayPageDir(), 'frame.html'),
+      () => `http://127.0.0.1:${this.ports.local}`,
+    );
+    this.displays = new DisplayManager({ windowHost: this.windowHost, serialPorts, wifiPorts, frameRenderer: this.frames });
     this.simulator = new SimulatorWindow(() => this.displayUrl('sim', 'preview'));
 
     const serverDeps = {
@@ -247,6 +260,7 @@ export class Agent {
     this.safely('scene stop', () => this.machine.dispose());
     await this.displays.dispose().catch((error) => console.error('[agent] displays stop failed', error));
     this.safely('display windows close', () => this.windowHost.closeAll());
+    this.safely('frame renderer close', () => this.frames.dispose());
     await Promise.all([this.localServer.stop(), this.lanServer.stop()]).catch((error) =>
       console.error('[agent] servers stop failed', error),
     );
@@ -385,6 +399,7 @@ export class Agent {
       languages: config.language.display,
       ambient: { slideSeconds: config.ambient.slideSeconds, items: config.ambient.items },
       thanks: { seconds: config.thanks.seconds, ...(rating && rating.k === 'rating' ? { ratingUrl: rating.url } : {}) },
+      ...(isPayeeConfigured(config) ? { standeeUri: config.upi.baseUri } : {}),
     };
   }
 
@@ -539,6 +554,53 @@ export class Agent {
     }, 100);
   }
 
+  // ---------- Wi-Fi displays ----------
+
+  private async pairWifi(address: string, code: string): Promise<WifiPairResult> {
+    const target = splitAddress(address);
+    if (!target) return { ok: false, reason: 'address' };
+    if (!isPairingCode(code.trim())) return { ok: false, reason: 'code' };
+    const full = `${target.host}:${target.port}`;
+    try {
+      const { id, key } = await pair(full, code.trim());
+      const info = (await discover({ timeoutMs: 1_000, hosts: [target.host] })).find((d) => d.id === id);
+      // Pairing again replaces the old entry for the same display.
+      const displays = this.config.get().displays.filter((d) => !(d.driver === 'wifi-frame' && d.device === id));
+      let n = 1;
+      while (displays.some((d) => d.id === `wifi-${n}`)) n += 1;
+      const profile =
+        (info?.profile && PROFILE_PRESETS[info.profile]?.mode === 'frame' && info.profile) ||
+        frameProfiles().find((p) => info && p.w === info.w && p.h === info.h)?.id ||
+        'waveshare-2in13-v4';
+      displays.push({
+        id: `wifi-${n}`,
+        driver: 'wifi-frame',
+        enabled: true,
+        name: info?.name || t('app.displays.kind.wifi-frame'),
+        device: id,
+        address: /^\d+\.\d+\.\d+\.\d+$/.test(target.host) ? (info?.address ?? full) : full,
+        key,
+        profile,
+        rotation: info?.rotation ?? 0,
+      });
+      this.config.update({ displays });
+      return { ok: true, displayId: `wifi-${n}` };
+    } catch (error) {
+      if (!(error instanceof DisplayRefused)) console.error('[wifi] pairing failed', error);
+      const reason = error instanceof DisplayRefused ? error.reason : 'unreachable';
+      return { ok: false, reason };
+    }
+  }
+
+  private async forgetWifi(id: string): Promise<void> {
+    const display = this.config.get().displays.find((d) => d.id === id);
+    if (!display) return;
+    this.config.update({ displays: this.config.get().displays.filter((d) => d.id !== id) });
+    if (display.driver !== 'wifi-frame') return;
+    // After its driver has let go: the display forgets this PC and shows its pairing code again.
+    await unpair(display).catch((error) => console.warn('[wifi] could not tell the display to forget this PC', error));
+  }
+
   // ---------- IPC ----------
 
   private registerIpc(): void {
@@ -628,6 +690,16 @@ export class Agent {
     });
 
     on(IPC.openLogs, () => void shell.openPath(logDir()));
+    handle(IPC.listSerialPorts, () => listPorts().catch(() => []));
+    handle(IPC.wifiDiscover, async (): Promise<WifiDisplayFound[]> => {
+      const displays = this.config.get().displays;
+      return (await discover()).map((found) => ({
+        ...found,
+        added: displays.some((d) => d.driver === 'wifi-frame' && d.device === found.id),
+      }));
+    });
+    handle(IPC.wifiPair, (address: string, code: string) => this.pairWifi(String(address), String(code)));
+    handle(IPC.wifiForget, (id: string) => this.forgetWifi(String(id)));
     handle(IPC.updateCheck, () => this.updater.check());
     handle(IPC.updateInstall, () => this.installUpdate());
     handle(IPC.whatsNewDismiss, () => {

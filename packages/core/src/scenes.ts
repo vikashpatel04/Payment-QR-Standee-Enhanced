@@ -34,14 +34,16 @@ export interface ThanksScene {
 
 export type Scene = AmbientScene | PayScene | ThanksScene;
 
-/** Text in several languages, keyed by language code: `{ en: "…", ta: "…" }`. */
+/** Text in several languages, keyed by language code: `{ en: "…", hi: "…" }`. */
 export type LocalText = Record<string, string>;
 
 export type AmbientItem =
   | { k: 'logo' }
   | { k: 'rating'; url: string; text?: LocalText }
   | { k: 'text'; text: LocalText }
-  | { k: 'image'; src: string };
+  | { k: 'image'; src: string }
+  /** The shop's own UPI QR with no amount, like the printed standee: the customer types the amount. */
+  | { k: 'standee'; text?: LocalText };
 
 /** Everything a display needs besides the scene itself: branding, wording and the playlist. */
 export interface DisplayContent {
@@ -55,6 +57,8 @@ export interface DisplayContent {
   languages: string[];
   ambient: { slideSeconds: number; items: AmbientItem[] };
   thanks: { seconds: number; ratingUrl?: string };
+  /** The shop's standee QR (no amount), for the standee slide. Absent until a payee is set up. */
+  standeeUri?: string;
 }
 
 export function secondsLeft(scene: PayScene | ThanksScene, now: number): number {

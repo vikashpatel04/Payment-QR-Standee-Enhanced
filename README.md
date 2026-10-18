@@ -33,7 +33,8 @@ A QR always ends: on Clear, on a new amount, when its time runs out (3 minutes b
 | Simulator | Nothing | A window on this PC. For trying the workflow. |
 | Another monitor | A second screen on HDMI or USB-C | Full screen, never takes focus, never opens on the cashier's own screen. |
 | Phone or tablet | Any browser on the shop Wi-Fi | Open the address shown in **Displays** and enter the 6-digit pairing code. Windows Firewall asks once whether to allow Counter Pay on private networks. |
-| USB display (ESP32, E-ink) | — | Phase 2. |
+| Wi-Fi E-ink display (beta) | A Raspberry Pi with a Waveshare e-Paper HAT (or any board that speaks the [display protocol](docs/DISPLAY-PROTOCOL.md)) on the shop network | Run one install command on the Pi, then pair it with the 6-digit code on its screen. After pairing, only this PC can put anything on it. [clients/raspberry-pi](clients/raspberry-pi/README.md). |
+| USB E-ink display (beta) | An ESP32 board and a black-and-white Waveshare e-Paper panel, on one USB cable | Flash the firmware once, then add it in **Displays**. Wiring, supported panels and flashing: [docs/HARDWARE.md](docs/HARDWARE.md). |
 
 ## Shortcuts
 
@@ -71,12 +72,14 @@ A development build keeps its settings and History in `%APPDATA%\Counter Pay Dev
 
 ```
 packages/core/       pure TypeScript: amounts, UPI links, references, scenes, state machine, protocol, config
-packages/drivers/    display drivers behind one DisplayDriver interface (simulator, window, web; serial in Phase 2)
+packages/drivers/    display drivers behind one DisplayDriver interface (simulator, window, web, USB E-ink)
 packages/plugins/    point-of-sale trigger interface; a read-only "bill saved" watcher in Phase 4
 apps/agent/          the Electron app: tray agent, popup, toast, main window, local server, History
-apps/display/        the customer display page, used by every browser-based display
+apps/display/        the customer display page, used by every browser-based display, and the E-ink frame page
+firmware/            ESP32 firmware for USB E-ink displays (PlatformIO)
+clients/             display programs for other boards: raspberry-pi/ (Wi-Fi or USB, Python)
 locales/             app text (English) and customer display text (English + 10 Indian languages)
-docs/                CONTRIBUTING.md, SECURITY.md, RELEASING.md, releases/ (release notes)
+docs/                CONTRIBUTING.md, SECURITY.md, RELEASING.md, HARDWARE.md, DISPLAY-PROTOCOL.md, releases/ (release notes)
 ```
 
 ## Privacy and safety

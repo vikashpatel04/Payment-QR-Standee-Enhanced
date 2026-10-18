@@ -59,6 +59,24 @@ function Slide({ item, content, langs }: { item: AmbientItem; content: ContentMe
           <img className={styles.image} src={item.src} alt="" />
         </div>
       );
+    case 'standee':
+      // The shop's own UPI QR with no amount, like the printed standee.
+      return (
+        <div className={styles.slide}>
+          {content?.shop && <div className={styles.shopBig}>{content.shop}</div>}
+          <div className={styles.smallCard}>
+            <Qr text={content?.standee ?? ''} size={200} label={say(langs[0] ?? 'en', 'display.scanToPay')} />
+          </div>
+          <Bi
+            langs={langs}
+            k={item.text ? undefined : 'display.scanToPay'}
+            {...(item.text ? { text: item.text } : {})}
+            className={styles.slideTitle}
+            primary={styles.slideTitlePrimary}
+            secondary={styles.slideTitleSecondary}
+          />
+        </div>
+      );
   }
 }
 
@@ -66,7 +84,10 @@ function Slide({ item, content, langs }: { item: AmbientItem; content: ContentMe
 export function Ambient({ content, items, slideSeconds, langs, connecting }: AmbientProps) {
   // Slides the shop hasn't finished filling in (no link, no words) are skipped.
   const ready = items.filter(
-    (item) => (item.k !== 'rating' || item.url) && (item.k !== 'text' || Object.values(item.text).some(Boolean)),
+    (item) =>
+      (item.k !== 'rating' || item.url) &&
+      (item.k !== 'text' || Object.values(item.text).some(Boolean)) &&
+      (item.k !== 'standee' || content?.standee),
   );
   const slides: AmbientItem[] = ready.length ? ready : [{ k: 'logo' }];
   const count = slides.length;

@@ -1,0 +1,402 @@
+import { type AmbientItem, type DisplayContent, formatINR, type Scene } from '@counterpay/core';
+import QRCode from 'qrcode';
+import { type ReactNode, useLayoutEffect, useRef } from 'react';
+import { say } from '../Bilingual';
+
+export interface FrameInput {
+  scene: Scene;
+  content: DisplayContent | null;
+  width: number;
+  height: number;
+  slide: number;
+  test?: boolean;
+  now: number;
+}
+
+interface QrFit {
+  modules: number;
+  quiet: number;
+  ppm: number;
+  px: number;
+  path: string;
+}
+
+function modulesPath(code: QRCode.QRCode, quiet: number): string {
+  const n = code.modules.size;
+  let path = '';
+  for (let y = 0; y < n; y++) {
+    let x = 0;
+    while (x < n) {
+      if (!code.modules.data[y * n + x]) {
+        x++;
+        continue;
+      }
+      const start = x;
+      while (x < n && code.modules.data[y * n + x]) x++;
+      path += `M${start + quiet} ${y + quiet}h${x - start}v1h-${x - start}z`;
+    }
+  }
+  return path;
+}
+
+/**
+ * As big as the space allows: the largest whole number of pixels per module (never
+ * anti-aliased), then as much quiet zone as still fits, up to 4 modules. Error correction
+ * M, or L when that buys a bigger module: a crisp E-ink screen doesn't need M's extra
+ * margin for dirt and wear.
+ *
+ * `minQuiet` is 2 modules, or 1 for a QR set flush against the panel's edges: the panel's
+ * own white border adds to it there, and the layout keeps a wider gap on the text side
+ * (see textGap).
+ */
+function fitQr(text: string, maxPx: number, minQuiet = 2): QrFit | null {
+  if (!text) return null;
+  const data = [{ data: new TextEncoder().encode(text), mode: 'byte' as const }];
+  let best: QrFit | null = null;
+  for (const level of ['M', 'L'] as const) {
+    const code = QRCode.create(data, { errorCorrectionLevel: level });
+    const n = code.modules.size;
+    const ppm = Math.floor(maxPx / (n + 2 * minQuiet));
+    if (ppm < 2 || (best && ppm <= best.ppm)) continue;
+    const quiet = Math.min(4, Math.floor((maxPx / ppm - n) / 2));
+    best = { modules: n, quiet, ppm, px: (n + 2 * quiet) * ppm, path: modulesPath(code, quiet) };
+  }
+  return best;
+}
+
+/** Extra space beside an edge-flush QR, so the side facing the text has at least 3 modules of quiet zone. */
+function textGap(fit: QrFit): number {
+  return Math.max(0, 3 - fit.quiet) * fit.ppm;
+}
+
+function Qr({ fit, x, y }: { fit: QrFit; x: number; y: number }) {
+  const size = fit.modules + 2 * fit.quiet;
+  return (
+    <svg
+      className="qr"
+      style={{ left: x, top: y }}
+      width={fit.px}
+      height={fit.px}
+      viewBox={`0 0 ${size} ${size}`}
+      shapeRendering="crispEdges"
+    >
+      <rect width={size} height={size} fill="#fff" />
+      <path d={fit.path} fill="#000" />
+    </svg>
+  );
+}
+
+/** One line of text, shrunk until it fits its box. Runs before paint, so the frame never shows it overflowing. */
+function Fit({ max, min = 9, weight = 600, lang, children }: { max: number; min?: number; weight?: number; lang?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let size = max;
+    el.style.fontSize = `${size}px`;
+    while (size > min && el.scrollWidth > el.clientWidth) {
+      size -= 1;
+      el.style.fontSize = `${size}px`;
+    }
+  });
+  return (
+    <div ref={ref} className="line" style={{ fontSize: max, fontWeight: weight, width: '100%' }} lang={lang}>
+      {children}
+    </div>
+  );
+}
+
+/** Up to `lines` lines of text, shrunk until it fits. For shop names on narrow panels. */
+function FitLines({ max, min = 9, lines = 2, weight = 700, children }: { max: number; min?: number; lines?: number; weight?: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let size = max;
+    const fits = () => el.scrollHeight <= Math.ceil(size * 1.15 * lines) + 1 && el.scrollWidth <= el.clientWidth;
+    el.style.fontSize = `${size}px`;
+    while (size > min && !fits()) {
+      size -= 1;
+      el.style.fontSize = `${size}px`;
+    }
+  });
+  return (
+    <div ref={ref} className="lines" style={{ fontSize: max, fontWeight: weight, width: '100%' }}>
+      {children}
+    </div>
+  );
+}
+
+function clock(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function Pay({ input, langs }: { input: FrameInput; langs: string[] }) {
+  const { scene, content, width, height } = input;
+  if (scene.kind !== 'pay') return null;
+  const [first = 'en', second] = langs;
+  const landscape = width >= height;
+  const fit = fitQr(scene.uri, landscape ? height : width, 1);
+  const amount = formatINR(scene.amountPaise);
+  const unit = Math.min(width, height);
+  const words = (
+    <>
+      {content?.shopName && <Fit max={Math.round(unit * 0.1)}>{content.shopName}</Fit>}
+      <Fit max={Math.round(unit * 0.3)} weight={700}>
+        {amount}
+      </Fit>
+      <Fit max={Math.round(unit * 0.09)} lang={first}>
+        {say(first, 'display.scanHint')}
+      </Fit>
+      {second && (
+        <Fit max={Math.round(unit * 0.09)} weight={500} lang={second}>
+          {say(second, 'display.scanHint')}
+        </Fit>
+      )}
+      <Fit max={Math.round(unit * 0.08)} weight={500} lang={first}>
+        {say(first, 'display.shownAt', { time: clock(scene.shownAt) })}
+      </Fit>
+    </>
+  );
+
+  if (!fit) {
+    return (
+      <div className="center" style={{ padding: 6 }}>
+        <Fit max={Math.round(unit * 0.3)} weight={700}>
+          {amount}
+        </Fit>
+        <Fit max={Math.round(unit * 0.1)}>{say(first, 'display.scanToPay')}</Fit>
+      </div>
+    );
+  }
+
+  if (landscape) {
+    const top = Math.floor((height - fit.px) / 2);
+    const left = fit.px + textGap(fit);
+    return (
+      <>
+        <Qr fit={fit} x={0} y={top} />
+        <div className="column" style={{ left, right: Math.max(2, Math.round(unit * 0.03)) }}>
+          {words}
+        </div>
+      </>
+    );
+  }
+
+  const x = Math.floor((width - fit.px) / 2);
+  return (
+    <>
+      <Qr fit={fit} x={x} y={0} />
+      <div className="column" style={{ top: fit.px + textGap(fit), bottom: 2, left: 3, right: 3, textAlign: 'center', justifyContent: 'space-evenly' }}>
+        <div className="rule" />
+        {content?.shopName && <FitLines max={Math.round(unit * 0.14)}>{content.shopName}</FitLines>}
+        <Fit max={Math.round(unit * 0.22)} weight={700}>
+          {amount}
+        </Fit>
+        <Fit max={Math.round(unit * 0.085)} weight={600} lang={first}>
+          {say(first, 'display.scanHint')}
+        </Fit>
+        {second && (
+          <Fit max={Math.round(unit * 0.085)} weight={500} lang={second}>
+            {say(second, 'display.scanHint')}
+          </Fit>
+        )}
+        <Fit max={Math.round(unit * 0.075)} weight={500} lang={first}>
+          {say(first, 'display.shownAt', { time: clock(scene.shownAt) })}
+        </Fit>
+      </div>
+    </>
+  );
+}
+
+/**
+ * The shop's own standee QR, no amount: QR as big as it goes, the shop name in bold and
+ * the shop's message (for example "Happy Shopping!") or how to pay.
+ */
+function Standee({ input, langs, text }: { input: FrameInput; langs: string[]; text?: Record<string, string> }) {
+  const { content, width, height } = input;
+  const [first = 'en'] = langs;
+  const uri = content?.standeeUri;
+  const landscape = width >= height;
+  const fit = uri ? fitQr(uri, landscape ? height : width, 1) : null;
+  const unit = Math.min(width, height);
+  const message = text ? (
+    <TwoLines text={text} langs={langs} max={Math.round(unit * 0.12)} />
+  ) : (
+    <Fit max={Math.round(unit * 0.09)} weight={600} lang={first}>
+      {say(first, 'display.scanToPay')}
+    </Fit>
+  );
+  const name = content?.shopName && <FitLines max={Math.round(unit * (landscape ? 0.16 : 0.14))}>{content.shopName}</FitLines>;
+  if (!fit) {
+    return (
+      <div className="center" style={{ padding: 6, gap: 4 }}>
+        {name}
+        {message}
+      </div>
+    );
+  }
+  if (landscape) {
+    return (
+      <>
+        <Qr fit={fit} x={0} y={Math.floor((height - fit.px) / 2)} />
+        <div className="column" style={{ left: fit.px + textGap(fit), right: 3, textAlign: 'center', justifyContent: 'center', gap: 6 }}>
+          {name}
+          {message}
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <Qr fit={fit} x={Math.floor((width - fit.px) / 2)} y={0} />
+      <div className="column" style={{ top: fit.px + textGap(fit), bottom: 2, left: 3, right: 3, textAlign: 'center', justifyContent: 'space-evenly' }}>
+        <div className="rule" />
+        {name}
+        {message}
+      </div>
+    </>
+  );
+}
+
+function ready(items: AmbientItem[], content: DisplayContent | null): AmbientItem[] {
+  const usable = items.filter(
+    (item) =>
+      (item.k !== 'rating' || item.url) &&
+      (item.k !== 'text' || Object.values(item.text).some(Boolean)) &&
+      (item.k !== 'standee' || content?.standeeUri),
+  );
+  return usable.length ? usable : [{ k: 'logo' }];
+}
+
+function TwoLines({ k, text, langs, max }: { k?: string; text?: Record<string, string>; langs: string[]; max: number }) {
+  const [first = 'en', second] = langs;
+  const pick = (lang: string) => (text ? text[lang] ?? '' : k ? say(lang, k) : '');
+  const one = pick(first);
+  const two = second ? pick(second) : '';
+  return (
+    <>
+      {one && (
+        <Fit max={max} weight={700} lang={first}>
+          {one}
+        </Fit>
+      )}
+      {two && two !== one && (
+        <Fit max={Math.round(max * 0.7)} weight={500} lang={second}>
+          {two}
+        </Fit>
+      )}
+    </>
+  );
+}
+
+/** A title beside (landscape) or above (portrait) a QR, for the rating slide and the Thanks scene. */
+function WithQr({ input, url, children }: { input: FrameInput; url: string | undefined; children: ReactNode }) {
+  const { width, height } = input;
+  const landscape = width >= height;
+  const fit = url ? fitQr(url, landscape ? height : Math.min(width, height * 0.6)) : null;
+  if (!fit) return <div className="center" style={{ padding: 6 }}>{children}</div>;
+  if (landscape) {
+    return (
+      <>
+        <div className="column" style={{ left: 6, right: fit.px + 4, textAlign: 'center' }}>
+          {children}
+        </div>
+        <Qr fit={fit} x={width - fit.px} y={Math.floor((height - fit.px) / 2)} />
+      </>
+    );
+  }
+  return (
+    <>
+      <div className="column" style={{ top: 0, bottom: fit.px, left: 4, right: 4, textAlign: 'center' }}>
+        {children}
+      </div>
+      <Qr fit={fit} x={Math.floor((width - fit.px) / 2)} y={height - fit.px} />
+    </>
+  );
+}
+
+function Ambient({ input, langs }: { input: FrameInput; langs: string[] }) {
+  const { content, width, height, slide } = input;
+  const items = ready(content?.ambient.items ?? [], content);
+  const item = items[slide % items.length]!;
+  const unit = Math.min(width, height);
+  switch (item.k) {
+    case 'logo':
+      return (
+        <div className="center" style={{ padding: 6, gap: 4 }}>
+          {content?.logoUrl ? (
+            <img className="logo" src={content.logoUrl} alt="" />
+          ) : (
+            content?.shopName && (
+              <Fit max={Math.round(unit * 0.24)} weight={700}>
+                {content.shopName}
+              </Fit>
+            )
+          )}
+          <TwoLines k="display.welcome" langs={langs} max={Math.round(unit * 0.13)} />
+        </div>
+      );
+    case 'rating':
+      return (
+        <WithQr input={input} url={item.url}>
+          <TwoLines k={item.text ? undefined : 'display.rateUs'} text={item.text} langs={langs} max={Math.round(unit * 0.13)} />
+        </WithQr>
+      );
+    case 'text':
+      return (
+        <div className="center" style={{ padding: 6, gap: 4 }}>
+          <TwoLines text={item.text} langs={langs} max={Math.round(unit * 0.2)} />
+        </div>
+      );
+    case 'image':
+      return (
+        <div className="center">
+          <img className="logo" style={{ maxWidth: '100%', maxHeight: '100%' }} src={item.src} alt="" />
+        </div>
+      );
+    case 'standee':
+      return <Standee input={input} langs={langs} {...(item.text ? { text: item.text } : {})} />;
+  }
+}
+
+function Thanks({ input, langs }: { input: FrameInput; langs: string[] }) {
+  const unit = Math.min(input.width, input.height);
+  return (
+    <WithQr input={input} url={input.content?.thanks.ratingUrl}>
+      <TwoLines k="display.thankYou" langs={langs} max={Math.round(unit * 0.24)} />
+      {input.content?.thanks.ratingUrl && <TwoLines k="display.rateUs" langs={langs.slice(0, 1)} max={Math.round(unit * 0.09)} />}
+    </WithQr>
+  );
+}
+
+function Test({ input }: { input: FrameInput }) {
+  return (
+    <>
+      <div className="test" />
+      <div className="testLabel" style={{ fontSize: Math.round(Math.min(input.width, input.height) * 0.12) }}>
+        <div>Counter Pay</div>
+        <div>
+          {input.width} × {input.height}
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function FrameView({ input, onLaidOut }: { input: FrameInput; onLaidOut: () => void }) {
+  const langs = input.content?.languages.length ? input.content.languages : ['en'];
+  // Children shrink their text in their own layout effects, which run first.
+  useLayoutEffect(onLaidOut);
+  let body: ReactNode;
+  if (input.test) body = <Test input={input} />;
+  else if (input.scene.kind === 'pay') body = <Pay input={input} langs={langs} />;
+  else if (input.scene.kind === 'thanks') body = <Thanks input={input} langs={langs} />;
+  else body = <Ambient input={input} langs={langs} />;
+  return (
+    <div className="frame" style={{ width: input.width, height: input.height }}>
+      {body}
+    </div>
+  );
+}

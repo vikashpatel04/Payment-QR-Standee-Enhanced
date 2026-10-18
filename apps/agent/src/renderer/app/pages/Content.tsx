@@ -100,6 +100,18 @@ function ItemEditor({
       );
     case 'text':
       return <LocalFields text={item.text} langs={langs} onChange={(text) => onChange({ ...item, text })} />;
+    case 'standee':
+      return (
+        <div className={ui.stack}>
+          <span className={ui.small}>{t('app.content.standeeSlide')}</span>
+          <LocalFields
+            text={item.text}
+            langs={langs}
+            placeholderKey="display.scanToPay"
+            onChange={(text) => onChange(Object.keys(text).length ? { ...item, text } : { k: 'standee' })}
+          />
+        </div>
+      );
     case 'image':
       return (
         <div className={ui.row}>
@@ -138,7 +150,8 @@ export function Content({ snapshot }: { snapshot: AppSnapshot }) {
       if (src) setItems([...items, { k: 'image', src }]);
       return;
     }
-    const item: AmbientItem = k === 'logo' ? { k } : k === 'rating' ? { k, url: '' } : { k: 'text', text: {} };
+    const item: AmbientItem =
+      k === 'logo' || k === 'standee' ? { k } : k === 'rating' ? { k, url: '' } : { k: 'text', text: {} };
     setItems([...items, item]);
   };
 
@@ -285,7 +298,7 @@ export function Content({ snapshot }: { snapshot: AppSnapshot }) {
               ))}
             </div>
             <div className={ui.row} style={{ marginTop: 8 }}>
-              {(['logo', 'rating', 'text', 'image'] as const).map((k) => (
+              {(['logo', 'standee', 'rating', 'text', 'image'] as const).map((k) => (
                 <button key={k} type="button" className={ui.button} onClick={() => void add(k)}>
                   <Icon name="plus" size={14} />
                   {t(`app.content.kind.${k}`)}

@@ -55,16 +55,16 @@ describe('sceneToMessage', () => {
 describe('playlist', () => {
   const items: AmbientItem[] = [
     { k: 'logo' },
-    { k: 'rating', url: 'https://g.page/r/example/review', text: { en: 'Rate us', ta: 'மதிப்பிடுங்கள்' } },
-    { k: 'text', text: { en: 'Free alteration', ta: 'இலவச ஆல்டரேஷன்' } },
+    { k: 'rating', url: 'https://g.page/r/example/review', text: { en: 'Rate us', hi: 'रेटिंग दें' } },
+    { k: 'text', text: { en: 'Free alteration', hi: 'मुफ़्त ऑल्टरेशन' } },
     { k: 'image', src: '/content/offer.png' },
   ];
 
   it('flattens text into the spec wire shape', () => {
     expect(toWirePlaylist(items)).toEqual([
       { k: 'logo' },
-      { k: 'rating', url: 'https://g.page/r/example/review', en: 'Rate us', ta: 'மதிப்பிடுங்கள்' },
-      { k: 'text', en: 'Free alteration', ta: 'இலவச ஆல்டரேஷன்' },
+      { k: 'rating', url: 'https://g.page/r/example/review', en: 'Rate us', hi: 'रेटिंग दें' },
+      { k: 'text', en: 'Free alteration', hi: 'मुफ़्त ऑल्टरेशन' },
       { k: 'image', src: '/content/offer.png' },
     ]);
   });
@@ -78,7 +78,7 @@ describe('playlist', () => {
       shopName: 'YOUR SHOP',
       payeeLabel: 'YOUR SHOP',
       accent: '#14B37D',
-      languages: ['en', 'ta'],
+      languages: ['en', 'hi'],
       ambient: { slideSeconds: 8, items },
       thanks: { seconds: 10, ratingUrl: 'https://g.page/r/example/review' },
     });
@@ -152,5 +152,19 @@ describe('LineDecoder', () => {
     const decoder = new LineDecoder();
     const message = { v: 1, t: 'ping', seq: 14 } as const;
     expect(decoder.push(encodeLine(message))).toEqual([message]);
+  });
+
+  it('finds a message behind boot noise on serial links', () => {
+    const noisy = 'x\u00f8x\u0000{x\u0000{"t\u00f8{"t":"hello","fw":"1.0.0","w":250,"h":122}\n';
+    expect(new LineDecoder(undefined, { skipNoise: true }).push(noisy)).toEqual([{ t: 'hello', fw: '1.0.0', w: 250, h: 122 }]);
+    const errors: string[] = [];
+    expect(new LineDecoder((reason) => errors.push(reason)).push(noisy)).toEqual([]);
+    expect(errors).toEqual(['bad-json']);
+  });
+
+  it('still reports pure noise on serial links', () => {
+    const errors: string[] = [];
+    expect(new LineDecoder((reason) => errors.push(reason), { skipNoise: true }).push('x\u00f8{"t\u0000\n')).toEqual([]);
+    expect(errors).toEqual(['bad-json']);
   });
 });

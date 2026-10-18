@@ -1,0 +1,39 @@
+name: Firmware
+
+# Builds the ESP32 firmware for every supported panel when it changes.
+on:
+  push:
+    branches: [main]
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+  pull_request:
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [esp32-waveshare-2in13-v4, esp32-waveshare-4in2, esp32-waveshare-7in5]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: platformio-${{ hashFiles('firmware/frame-generic/platformio.ini') }}
+
+      - run: pip install platformio==6.2.0
+
+      - run: pio run -d firmware/frame-generic -e ${{ matrix.env }}

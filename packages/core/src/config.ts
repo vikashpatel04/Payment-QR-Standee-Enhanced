@@ -5,7 +5,7 @@ import type { AmbientItem, LocalText } from './scenes';
 
 export const CONFIG_SCHEMA_VERSION = 1;
 
-export type DriverKind = 'simulator' | 'window' | 'web' | 'serial-frame' | 'serial-smart';
+export type DriverKind = 'simulator' | 'window' | 'web' | 'serial-frame' | 'wifi-frame' | 'serial-smart';
 
 export interface DisplayConfig {
   id: string;
@@ -20,6 +20,10 @@ export interface DisplayConfig {
   /** Serial drivers: a COM port, or `auto`. */
   port?: string;
   profile?: string;
+  /** Wi-Fi frame displays: the display's own id, its address when it was paired (host:port), and its key. */
+  device?: string;
+  address?: string;
+  key?: string;
 }
 
 export interface CounterPayConfig {
@@ -84,7 +88,7 @@ export function defaultConfig(secrets: ConfigSecrets): CounterPayConfig {
   };
 }
 
-const DRIVERS: readonly DriverKind[] = ['simulator', 'window', 'web', 'serial-frame', 'serial-smart'];
+const DRIVERS: readonly DriverKind[] = ['simulator', 'window', 'web', 'serial-frame', 'wifi-frame', 'serial-smart'];
 const ROTATIONS: readonly number[] = [0, 90, 180, 270];
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
@@ -128,6 +132,10 @@ function ambientItem(value: unknown): AmbientItem | null {
     }
     case 'image':
       return typeof value.src === 'string' ? { k: 'image', src: value.src } : null;
+    case 'standee': {
+      const text = localText(value.text);
+      return text ? { k: 'standee', text } : { k: 'standee' };
+    }
     default:
       return null;
   }
@@ -143,6 +151,9 @@ function displayConfig(value: unknown): DisplayConfig | null {
   if (typeof value.pairingCode === 'string') display.pairingCode = value.pairingCode;
   if (typeof value.port === 'string') display.port = value.port;
   if (typeof value.profile === 'string') display.profile = value.profile;
+  if (typeof value.device === 'string') display.device = value.device;
+  if (typeof value.address === 'string') display.address = value.address;
+  if (typeof value.key === 'string') display.key = value.key;
   return display;
 }
 

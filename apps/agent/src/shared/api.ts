@@ -163,6 +163,16 @@ export interface CounterPayApi {
     backupConfig(): Promise<{ saved: boolean; path?: string }>;
     /** Opens the folder with counter-pay.log, for reporting a problem. */
     openLogs(): void;
+    /** COM ports, for choosing a USB display's port. */
+    listSerialPorts(): Promise<Array<{ path: string; label: string; usbSerial: boolean }>>;
+    wifi: {
+      /** Displays that answered on the shop network in the last moment. */
+      discover(): Promise<WifiDisplayFound[]>;
+      /** Pairs with the display at `address` (host or host:port) using the code on its screen, and adds it. */
+      pair(address: string, code: string): Promise<WifiPairResult>;
+      /** Removes a Wi-Fi display and tells it to forget this PC, so it can be paired again. */
+      forget(displayId: string): Promise<void>;
+    };
     restoreConfig(): Promise<{ restored: boolean; error?: string }>;
     updates: {
       check(): Promise<UpdateState>;
@@ -186,6 +196,25 @@ export interface CounterPayApi {
   };
 }
 
+export interface WifiDisplayFound {
+  id: string;
+  name: string;
+  fw: string;
+  w: number;
+  h: number;
+  profile?: string;
+  address: string;
+  /** Paired with a PC already (this one or another). */
+  paired: boolean;
+  /** Already one of this PC's displays. */
+  added: boolean;
+  rotation?: 0 | 90 | 180 | 270;
+}
+
+export type WifiPairResult =
+  | { ok: true; displayId: string }
+  | { ok: false; reason: 'code' | 'paired' | 'busy' | 'key' | 'unreachable' | 'address' };
+
 export const IPC = {
   popupOpen: 'popup:open',
   popupSubmit: 'popup:submit',
@@ -205,6 +234,10 @@ export const IPC = {
   pickImage: 'app:pick-image',
   backupConfig: 'app:backup-config',
   openLogs: 'app:open-logs',
+  listSerialPorts: 'app:list-serial-ports',
+  wifiDiscover: 'wifi:discover',
+  wifiPair: 'wifi:pair',
+  wifiForget: 'wifi:forget',
   restoreConfig: 'app:restore-config',
   updateCheck: 'update:check',
   updateInstall: 'update:install',

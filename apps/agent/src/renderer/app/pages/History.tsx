@@ -25,7 +25,7 @@ function fromInput(value: string): number | undefined {
 
 /** Every QR ever shown: what was shown, not what was paid. */
 export function History({ snapshot }: { snapshot: AppSnapshot }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [range, setRange] = useState<Range>('today');
   const [from, setFrom] = useState(toInput(Date.now() - 6 * 86_400_000));
   const [to, setTo] = useState(toInput(Date.now()));
@@ -57,7 +57,7 @@ export function History({ snapshot }: { snapshot: AppSnapshot }) {
   // Reload when the filter changes and whenever a QR starts or ends.
   useEffect(load, [load, snapshot.scene.shownAt, snapshot.today.count]);
 
-  const locale = i18n.language === 'ta' ? 'ta-IN' : 'en-IN';
+  const locale = 'en-IN';
   const time = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   const day = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' });
 

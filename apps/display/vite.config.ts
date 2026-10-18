@@ -10,5 +10,9 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     target: 'es2020',
+    rollupOptions: {
+      // index: the customer display page. frame: the same scenes drawn at an E-ink panel's exact pixel size.
+      input: { index: 'index.html', frame: 'frame.html' },
+    },
   },
 });

@@ -2,6 +2,7 @@ import { app } from 'electron';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
+import { SerialPort } from 'serialport';
 import { displayPageDir, iconPath, preloadPath, rendererUrl } from './paths';
 import { loadPlatform } from './platform';
 
@@ -29,6 +30,14 @@ export async function selfTest(): Promise<SelfTestReport> {
     checks.sqliteError = (error as Error).message;
   }
 
+  try {
+    // Lists ports only; nothing is opened, so a printer on a COM port is never touched.
+    checks.serialPorts = String((await SerialPort.list()).length);
+  } catch (error) {
+    checks.serialPorts = false;
+    checks.serialPortsError = (error as Error).message;
+  }
+
   const platform = await loadPlatform();
   checks.focusHelpers = process.platform !== 'win32' || platform.name === 'win32';
   if (platform.name === 'win32') checks.foregroundCaptured = platform.captureForeground() !== undefined;
@@ -37,6 +46,7 @@ export async function selfTest(): Promise<SelfTestReport> {
   checks.renderer = 'file' in renderer ? existsSync(renderer.file) : true;
   checks.preload = existsSync(preloadPath());
   checks.displayPage = existsSync(join(displayPageDir(), 'index.html'));
+  checks.framePage = existsSync(join(displayPageDir(), 'frame.html'));
   checks.icons = existsSync(iconPath('tray.png')) && existsSync(iconPath('tray-dot.png'));
   if (app.isPackaged) checks.updateFeed = existsSync(join(process.resourcesPath, 'app-update.yml'));
 

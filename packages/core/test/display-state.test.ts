@@ -61,10 +61,10 @@ describe('display state', () => {
   it('takes the playlist and slide time', () => {
     const { state } = applyPcMessage(
       initialDisplayState(T0),
-      { v: 1, t: 'playlist', items: [{ k: 'logo' }, { k: 'text', en: 'Hi', ta: 'வணக்கம்' }], slide: 12 },
+      { v: 1, t: 'playlist', items: [{ k: 'logo' }, { k: 'text', en: 'Hi', te: 'నమస్కారం' }], slide: 12 },
       T0,
     );
-    expect(state.playlist).toEqual([{ k: 'logo' }, { k: 'text', text: { en: 'Hi', ta: 'வணக்கம்' } }]);
+    expect(state.playlist).toEqual([{ k: 'logo' }, { k: 'text', text: { en: 'Hi', te: 'నమస్కారం' } }]);
     expect(state.slideSeconds).toBe(12);
   });
 

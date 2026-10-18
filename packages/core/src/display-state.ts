@@ -76,6 +76,7 @@ export function applyPcMessage(state: DisplayState, message: PcMessage, now: num
       return { state: { ...heard, testUntil: now + message.seconds * 1000 }, replies: [] };
     case 'ping':
     case 'frame':
+    case 'who':
       return { state: heard, replies: [] };
   }
 }

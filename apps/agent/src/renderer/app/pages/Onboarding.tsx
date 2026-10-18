@@ -12,7 +12,9 @@ import ui from '../ui.module.css';
 import { newDisplay } from './Displays';
 import styles from './pages.module.css';
 
-type Choice = 'simulator' | 'window' | 'web';
+type Choice = 'simulator' | 'window' | 'web' | 'usb';
+
+const driverOf = (kind: Exclude<Choice, 'simulator'>) => (kind === 'usb' ? 'serial-frame' : kind);
 const STEPS = 4;
 
 function Payee({ snapshot, next }: { snapshot: AppSnapshot; next: () => void }) {
@@ -99,19 +101,20 @@ function Display({ snapshot, next, back }: { snapshot: AppSnapshot; next: () => 
       api.app.openSimulator();
       return;
     }
-    const existing = snapshot.config.displays.find((d) => d.driver === kind);
+    const existing = snapshot.config.displays.find((d) => d.driver === driverOf(kind));
     if (existing) {
       if (!existing.enabled) {
         updateConfig({ displays: snapshot.config.displays.map((d) => (d.id === existing.id ? { ...d, enabled: true } : d)) });
       }
       return;
     }
-    updateConfig({ displays: [...snapshot.config.displays, newDisplay(kind, snapshot, t(`app.displays.kind.${kind}`))] });
+    updateConfig({ displays: [...snapshot.config.displays, newDisplay(kind, snapshot, t(`app.displays.kind.${driverOf(kind)}`))] });
   };
 
   const [primary = 'en', second = ''] = snapshot.config.language.display;
   const web = snapshot.displays.find((d) => d.config.driver === 'web' && d.config.enabled);
-  const chosen = choice ? snapshot.displays.find((d) => d.config.driver === choice && d.config.enabled) : undefined;
+  const chosen =
+    choice && choice !== 'simulator' ? snapshot.displays.find((d) => d.config.driver === driverOf(choice) && d.config.enabled) : undefined;
 
   return (
     <>
@@ -137,9 +140,12 @@ function Display({ snapshot, next, back }: { snapshot: AppSnapshot; next: () => 
           <span className={styles.choiceTitle}>{t('app.setup.choice.web')}</span>
           <span className={ui.small}>{t('app.setup.choice.webHint')}</span>
         </button>
-        <button type="button" className={styles.choice} disabled>
-          <span className={styles.choiceTitle}>{t('app.displays.addUsb')}</span>
-          <span className={ui.small}>{t('app.displays.phase2')}</span>
+        <button type="button" className={choice === 'usb' ? styles.choiceOn : styles.choice} onClick={() => pick('usb')}>
+          <span className={styles.choiceTitle}>
+            {t('app.displays.kind.serial-frame')}
+            <span className={ui.tag}>{t('app.displays.beta')}</span>
+          </span>
+          <span className={ui.small}>{t('app.displays.addUsb')}</span>
         </button>
       </div>
       {choice === 'web' && web && (

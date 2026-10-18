@@ -14,6 +14,18 @@ export function StatusChip({ status, enabled }: { status: DriverStatus; enabled:
     case 'unsupported':
       return <span className={ui.chip}>{t('app.status.phase2')}</span>;
     default:
-      return <span className={ui.chipBad}>{t(status.detail === 'monitorMissing' ? 'app.status.monitorMissing' : 'app.status.offline')}</span>;
+      return (
+        <span className={ui.chipBad}>
+          {t(
+            status.detail === 'monitorMissing'
+              ? 'app.status.monitorMissing'
+              : status.detail === 'panelSilent'
+                ? 'app.status.panelSilent'
+                : status.detail === 'unpaired'
+                  ? 'app.status.unpaired'
+                  : 'app.status.offline',
+          )}
+        </span>
+      );
   }
 }

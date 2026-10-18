@@ -2,20 +2,16 @@ import { type DisplayContent, type DisplayProfile, type DriverKind, getProfile, 
 import type { Ack, DisplayDriver, DriverStatus } from './types';
 
 /**
- * Phase 2 stubs. Both serial drivers will open the port with `serialport`, read the
- * device's `hello`, and then:
- *  - serial-smart: send pay / clear / playlist lines (the ESP32-S3 draws scenes itself);
- *  - serial-frame: render the display page off-screen at the profile size, threshold
- *    it to the panel format (never dithered, so the QR stays sharp) and send a
- *    `frame` header plus raw bytes, waiting for the ack.
- * Until then they report "unsupported" so the app can say so plainly.
+ * Phase 2 stub for smart colour displays (ESP32-S3 + TFT drawing scenes itself from
+ * pay / clear / playlist lines). Until it is built it reports "unsupported" so the app
+ * can say so plainly. Frame-mode displays (E-ink) are in serial-frame.ts.
  */
 abstract class SerialDriverStub implements DisplayDriver {
   readonly profile: DisplayProfile;
 
   constructor(
     readonly id: string,
-    readonly kind: Extract<DriverKind, 'serial-frame' | 'serial-smart'>,
+    readonly kind: DriverKind,
     profileId: string | undefined,
     protected readonly port: string,
   ) {
@@ -58,8 +54,9 @@ export class SerialSmartDriver extends SerialDriverStub {
   }
 }
 
-export class SerialFrameDriver extends SerialDriverStub {
-  constructor(id: string, profileId: string | undefined, port = 'auto') {
-    super(id, 'serial-frame', profileId ?? 'waveshare-4in2', port);
+/** A display kind this host can't drive (for example, no serial access). */
+export class UnsupportedDriver extends SerialDriverStub {
+  constructor(id: string, kind: DriverKind, profileId: string | undefined) {
+    super(id, kind, profileId, 'auto');
   }
 }

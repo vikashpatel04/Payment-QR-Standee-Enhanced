@@ -66,7 +66,7 @@ function keyName(code: string): string | null {
 
 /**
  * Turns a key press into an accelerator, or null while only modifiers are held.
- * Uses the physical key (`code`) so a Tamil keyboard layout records the same shortcut.
+ * Uses the physical key (`code`) so an Indian-language keyboard layout records the same shortcut.
  */
 export function acceleratorFromKeyPress(press: KeyPress): string | null {
   if (MODIFIER_KEYS.has(press.key)) return null;

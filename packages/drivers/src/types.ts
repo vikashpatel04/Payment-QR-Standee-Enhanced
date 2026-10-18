@@ -8,7 +8,7 @@ export interface Ack {
   /** Time from send to ack. */
   latencyMs?: number;
   /** Why there was no ack: nobody connected, no reply in time, or a newer scene took over. */
-  reason?: 'offline' | 'timeout' | 'superseded' | 'unsupported';
+  reason?: 'offline' | 'timeout' | 'superseded' | 'unsupported' | 'panelSilent';
   /** The simulator acknowledges immediately; there is no device to wait for. */
   virtual?: boolean;
 }
@@ -20,7 +20,7 @@ export interface DriverStatus {
   kind: DriverKind;
   state: DriverState;
   /** A short machine-readable reason, turned into words by the app. */
-  detail?: 'monitorMissing' | 'noClients' | 'phase2' | 'linkLost';
+  detail?: 'monitorMissing' | 'noClients' | 'phase2' | 'linkLost' | 'panelSilent' | 'unpaired';
   /** Connected devices or pages showing scenes. */
   clients: number;
   /** Live previews watching this display in the main window. */
@@ -31,6 +31,10 @@ export interface DriverStatus {
   vpa?: string;
   size?: { w: number; h: number };
   lastAckMs?: number;
+  /** The COM port a USB display is on. */
+  port?: string;
+  /** For frame-mode displays: a data URL of the exact pixels on the panel now. */
+  preview?: string;
 }
 
 /** One end of a message link: a WebSocket, a serial port or an in-process pipe. */

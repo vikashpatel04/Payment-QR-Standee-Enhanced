@@ -138,6 +138,8 @@
 }
 
 .displayName {
+  width: 100%;
+  min-width: 0;
   height: 30px;
   padding: 0 6px;
   margin-left: -6px;
