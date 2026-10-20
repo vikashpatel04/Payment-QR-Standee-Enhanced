@@ -357,7 +357,8 @@ export class SerialFrameDriver implements DisplayDriver {
       content: this.content,
       width: this.width,
       height: this.height,
-      slide: this.slide,
+      // With key-changed slides, the agent says which slide; otherwise this driver's own timer does.
+      slide: this.content?.ambient.advance === 'key' ? (this.content.ambient.index ?? 0) : this.slide,
       ...(options.test ? { test: true } : {}),
       now: this.clock.now(),
     });
@@ -406,7 +407,7 @@ export class SerialFrameDriver implements DisplayDriver {
   private scheduleSlides(): void {
     this.clearTimer('slide');
     const items = this.content?.ambient.items.length ?? 0;
-    if (!this.running || this.scene?.kind !== 'ambient' || items < 2) return;
+    if (!this.running || this.scene?.kind !== 'ambient' || items < 2 || this.content?.ambient.advance === 'key') return;
     const seconds = Math.max(this.profile.slideSeconds ?? 0, this.content?.ambient.slideSeconds ?? 8);
     this.timers.slide = this.clock.setTimeout(() => {
       this.timers.slide = null;

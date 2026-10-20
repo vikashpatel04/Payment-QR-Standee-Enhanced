@@ -12,7 +12,8 @@ describe('normalizeConfig', () => {
 
   it('keeps the spec defaults', () => {
     const config = defaultConfig(secrets);
-    expect(config.shortcuts).toEqual({ summon: 'F9', clear: 'Shift+F9' });
+    expect(config.shortcuts).toEqual({ summon: 'F9', clear: 'Shift+F9', next: '' });
+    expect(config.ambient.advance).toBe('auto');
     expect(config.pay).toEqual({ ttlSeconds: 180, maxRupees: 100000, refPrefix: 'CP' });
     expect(config.thanks.seconds).toBe(10);
     expect(config.ambient.slideSeconds).toBe(8);

@@ -5,17 +5,19 @@ import type { ShortcutState } from '../shared/api';
 export interface ShortcutHandlers {
   summon(): void;
   clear(): void;
+  /** The next standby slide, when slides change with a key. */
+  next(): void;
 }
 
 type Name = keyof ShortcutHandlers;
 
 /**
- * The two global shortcuts. They work from anywhere, including while the billing software has focus.
+ * The global shortcuts. They work from anywhere, including while the billing software has focus.
  * Windows can refuse a key (F12 is reserved for debuggers); that is reported, not hidden.
  */
 export class Shortcuts {
-  private wanted: Record<Name, string> = { summon: '', clear: '' };
-  private registered: Record<Name, boolean> = { summon: false, clear: false };
+  private wanted: Record<Name, string> = { summon: '', clear: '', next: '' };
+  private registered: Record<Name, boolean> = { summon: false, clear: false, next: false };
   private paused = false;
   private suspended = false;
 
@@ -42,13 +44,13 @@ export class Shortcuts {
     this.refresh();
   }
 
-  state(): { summon: ShortcutState; clear: ShortcutState; paused: boolean } {
+  state(): { summon: ShortcutState; clear: ShortcutState; next: ShortcutState; paused: boolean } {
     const one = (name: Name): ShortcutState => ({
       accelerator: this.wanted[name],
       registered: this.registered[name],
       warning: this.wanted[name] ? shortcutWarning(this.wanted[name]) : 'needsKey',
     });
-    return { summon: one('summon'), clear: one('clear'), paused: this.paused };
+    return { summon: one('summon'), clear: one('clear'), next: one('next'), paused: this.paused };
   }
 
   dispose(): void {
@@ -58,10 +60,11 @@ export class Shortcuts {
   private refresh(): void {
     this.unregister();
     if (this.paused || this.suspended) return;
-    for (const name of ['summon', 'clear'] as const) {
+    for (const name of ['summon', 'clear', 'next'] as const) {
       const accelerator = this.wanted[name];
       if (!accelerator) continue;
       if (name === 'clear' && sameAccelerator(accelerator, this.wanted.summon)) continue;
+      if (name === 'next' && (sameAccelerator(accelerator, this.wanted.summon) || sameAccelerator(accelerator, this.wanted.clear))) continue;
       try {
         this.registered[name] = globalShortcut.register(accelerator, () => this.handlers[name]());
       } catch {
@@ -73,7 +76,7 @@ export class Shortcuts {
   }
 
   private unregister(): void {
-    for (const name of ['summon', 'clear'] as const) {
+    for (const name of ['summon', 'clear', 'next'] as const) {
       if (this.registered[name]) {
         try {
           globalShortcut.unregister(this.wanted[name]);

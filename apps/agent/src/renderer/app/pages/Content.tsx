@@ -1,9 +1,10 @@
-import { type AmbientItem, type LocalText, DISPLAY_LANGUAGES } from '@counterpay/core';
+import { type AmbientItem, DISPLAY_LANGUAGES, type LocalText, TEXT_SIZES, type TextSize } from '@counterpay/core';
 import type { AppSnapshot } from '@shared/api';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../shared/api';
 import { Icon } from '../components/Icon';
 import { Preview } from '../components/Preview';
+import { ShortcutRecorder } from '../components/ShortcutRecorder';
 import { updateConfig, useDraft } from '../hooks';
 import ui from '../ui.module.css';
 import styles from './pages.module.css';
@@ -56,6 +57,31 @@ function LocalFields({
   );
 }
 
+/** Small, medium or large words on this slide. */
+function SizeField({ item, onChange }: { item: Extract<AmbientItem, { size?: TextSize }>; onChange: (item: AmbientItem) => void }) {
+  const { t } = useTranslation();
+  return (
+    <label className={ui.row}>
+      <span className={ui.hint}>{t('app.content.textSize')}</span>
+      <select
+        className={ui.select}
+        value={item.size ?? 'm'}
+        onChange={(e) => {
+          const size = e.target.value as TextSize;
+          const { size: _old, ...rest } = item;
+          onChange(size === 'm' ? (rest as AmbientItem) : ({ ...rest, size } as AmbientItem));
+        }}
+      >
+        {TEXT_SIZES.map((size) => (
+          <option key={size} value={size}>
+            {t(`app.content.size.${size}`)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function ItemEditor({
   item,
   langs,
@@ -94,12 +120,18 @@ function ItemEditor({
             text={item.text}
             langs={langs}
             placeholderKey="display.rateUs"
-            onChange={(text) => onChange(Object.keys(text).length ? { ...item, text } : { k: 'rating', url: item.url })}
+            onChange={(text) => onChange(Object.keys(text).length ? { ...item, text } : { k: 'rating', url: item.url, ...(item.size ? { size: item.size } : {}) })}
           />
+          <SizeField item={item} onChange={onChange} />
         </div>
       );
     case 'text':
-      return <LocalFields text={item.text} langs={langs} onChange={(text) => onChange({ ...item, text })} />;
+      return (
+        <div className={ui.stack}>
+          <LocalFields text={item.text} langs={langs} onChange={(text) => onChange({ ...item, text })} />
+          <SizeField item={item} onChange={onChange} />
+        </div>
+      );
     case 'standee':
       return (
         <div className={ui.stack}>
@@ -108,8 +140,9 @@ function ItemEditor({
             text={item.text}
             langs={langs}
             placeholderKey="display.scanToPay"
-            onChange={(text) => onChange(Object.keys(text).length ? { ...item, text } : { k: 'standee' })}
+            onChange={(text) => onChange(Object.keys(text).length ? { ...item, text } : { k: 'standee', ...(item.size ? { size: item.size } : {}) })}
           />
+          <SizeField item={item} onChange={onChange} />
         </div>
       );
     case 'image':
@@ -245,21 +278,46 @@ export function Content({ snapshot }: { snapshot: AppSnapshot }) {
           <div className={ui.card}>
             <div className={ui.spread}>
               <h2 className={ui.cardTitle}>{t('app.content.playlist')}</h2>
-              <label className={ui.row}>
-                <span className={ui.small}>{t('app.content.slideSeconds')}</span>
+            </div>
+            <div className={ui.row} style={{ alignItems: 'flex-end', marginBottom: 10 }}>
+              <label className={ui.field}>
+                <span className={ui.label}>{t('app.content.advance')}</span>
                 <select
                   className={ui.select}
-                  value={config.ambient.slideSeconds}
-                  onChange={(e) => updateConfig({ ambient: { slideSeconds: Number(e.target.value) } })}
+                  value={config.ambient.advance}
+                  onChange={(e) => updateConfig({ ambient: { advance: e.target.value as 'auto' | 'key' } })}
                 >
-                  {[5, 8, 12, 20, 30, 60].map((s) => (
-                    <option key={s} value={s}>
-                      {t('app.history.seconds', { count: s })}
-                    </option>
-                  ))}
+                  <option value="auto">{t('app.content.advanceAuto')}</option>
+                  <option value="key">{t('app.content.advanceKey')}</option>
                 </select>
               </label>
+              {config.ambient.advance === 'auto' ? (
+                <label className={ui.field}>
+                  <span className={ui.label}>{t('app.content.slideSeconds')}</span>
+                  <select
+                    className={ui.select}
+                    value={config.ambient.slideSeconds}
+                    onChange={(e) => updateConfig({ ambient: { slideSeconds: Number(e.target.value) } })}
+                  >
+                    {[5, 8, 12, 20, 30, 60, 120, 300].map((s) => (
+                      <option key={s} value={s}>
+                        {t('app.history.seconds', { count: s })}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <label className={ui.field}>
+                  <span className={ui.label}>{t('app.content.nextKey')}</span>
+                  <ShortcutRecorder
+                    state={snapshot.shortcuts.next}
+                    other={snapshot.shortcuts.summon.accelerator}
+                    onChange={(next) => updateConfig({ shortcuts: { next } })}
+                  />
+                </label>
+              )}
             </div>
+            {config.ambient.advance === 'key' && <p className={ui.small}>{t('app.content.nextKeyHint')}</p>}
             <div>
               {items.map((item, index) => (
                 <div key={`${item.k}-${index}`} className={styles.item}>

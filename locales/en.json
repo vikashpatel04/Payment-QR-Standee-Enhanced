@@ -254,6 +254,13 @@
       "none": "None",
       "playlist": "Ambient playlist",
       "slideSeconds": "Each slide",
+      "advance": "Change slides",
+      "advanceAuto": "Automatically",
+      "advanceKey": "With a key",
+      "nextKey": "Next slide key",
+      "nextKeyHint": "Each press shows the next slide on every display, while no QR is showing. Pick a key your billing software doesn't use.",
+      "textSize": "Text size",
+      "size": { "s": "Small", "m": "Medium", "l": "Large" },
       "kind": {
         "logo": "Logo",
         "standee": "Your UPI QR",

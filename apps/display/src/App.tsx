@@ -51,6 +51,8 @@ function Display({ params, token, onUnauthorized }: { params: PageParams; token:
                   content={state.content}
                   items={state.playlist}
                   slideSeconds={state.slideSeconds}
+                  manual={state.manual}
+                  index={state.slideIndex}
                   langs={langs}
                   connecting={status !== 'open'}
                 />

@@ -1,4 +1,4 @@
-import type { AmbientItem, ContentMessage } from '@counterpay/core';
+import { type AmbientItem, type ContentMessage, readySlides, TEXT_SCALE } from '@counterpay/core';
 import { useEffect, useState } from 'react';
 import { Bi, say } from '../Bilingual';
 import { Qr } from '../Qr';
@@ -8,6 +8,9 @@ export interface AmbientProps {
   content: ContentMessage | null;
   items: AmbientItem[];
   slideSeconds: number;
+  /** Slides change only on the cashier's key: show `index`. */
+  manual?: boolean;
+  index?: number;
   langs: string[];
   connecting: boolean;
 }
@@ -81,15 +84,9 @@ function Slide({ item, content, langs }: { item: AmbientItem; content: ContentMe
 }
 
 /** The calm, branded default: a slow playlist of the logo, the rating QR and the shop's own messages. */
-export function Ambient({ content, items, slideSeconds, langs, connecting }: AmbientProps) {
-  // Slides the shop hasn't finished filling in (no link, no words) are skipped.
-  const ready = items.filter(
-    (item) =>
-      (item.k !== 'rating' || item.url) &&
-      (item.k !== 'text' || Object.values(item.text).some(Boolean)) &&
-      (item.k !== 'standee' || content?.standee),
-  );
-  const slides: AmbientItem[] = ready.length ? ready : [{ k: 'logo' }];
+export function Ambient({ content, items, slideSeconds, manual = false, index: manualIndex = 0, langs, connecting }: AmbientProps) {
+  // Slides the shop hasn't finished filling in (no link, no words, no payee) are skipped.
+  const slides: AmbientItem[] = readySlides(items, Boolean(content?.standee));
   const count = slides.length;
   // Restart the rotation only when the playlist itself changes, not on every render.
   const playlistKey = JSON.stringify(slides);
@@ -97,19 +94,23 @@ export function Ambient({ content, items, slideSeconds, langs, connecting }: Amb
 
   useEffect(() => {
     setIndex(0);
-    if (count < 2) return;
+    if (count < 2 || manual) return;
     const timer = setInterval(() => setIndex((i) => (i + 1) % count), Math.max(3, slideSeconds) * 1000);
     return () => clearInterval(timer);
-  }, [playlistKey, count, slideSeconds]);
+  }, [playlistKey, count, slideSeconds, manual]);
 
-  const item = slides[index % slides.length]!;
+  const shown = manual ? manualIndex : index;
+  const item = slides[shown % slides.length]!;
+  const size = 'size' in item && item.size ? TEXT_SCALE[item.size] : 1;
   return (
     <div className={styles.ambient}>
-      <Slide key={index} item={item} content={content} langs={langs} />
+      <div style={size === 1 ? undefined : { zoom: size }}>
+        <Slide key={shown} item={item} content={content} langs={langs} />
+      </div>
       {slides.length > 1 && (
         <div className={styles.dots}>
           {slides.map((_, i) => (
-            <span key={i} className={i === index ? styles.dotOn : styles.dot} />
+            <span key={i} className={i === shown % slides.length ? styles.dotOn : styles.dot} />
           ))}
         </div>
       )}

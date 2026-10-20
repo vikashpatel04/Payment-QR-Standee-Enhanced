@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { normalizeConfig } from '../src/config';
 import { isPairingCode, parseAnnounce, parseHandshake, splitAddress } from '../src/net-display';
 import { contentToMessages, fromWirePlaylist, toWirePlaylist } from '../src/protocol';
+import { readySlides } from '../src/scenes';
 
 const secrets = { token: () => 'token', pairingCode: () => '123456' };
 
@@ -69,6 +70,33 @@ describe('the standee slide', () => {
       standeeUri: 'upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME',
     });
     expect(content.standee).toBe('upi://pay?pa=shop@okaxis&pn=YOUR%20SHOP%20NAME');
+  });
+});
+
+describe('standby slides', () => {
+  it('keep a text size and the way they change', () => {
+    const config = normalizeConfig(
+      { ambient: { advance: 'key', items: [{ k: 'rating', url: 'https://example.com/r', size: 'l' }, { k: 'text', text: { en: 'Hi' }, size: 'huge' }] } },
+      secrets,
+    );
+    expect(config.ambient.advance).toBe('key');
+    expect(config.ambient.items).toEqual([{ k: 'rating', url: 'https://example.com/r', size: 'l' }, { k: 'text', text: { en: 'Hi' } }]);
+    expect(normalizeConfig({ ambient: { advance: 'sometimes' } }, secrets).ambient.advance).toBe('auto');
+  });
+
+  it('send the text size and the slide to browser displays', () => {
+    const items = [{ k: 'text' as const, text: { en: 'Free alteration' }, size: 's' as const }];
+    expect(fromWirePlaylist(toWirePlaylist(items))).toEqual(items);
+    const [, playlist] = contentToMessages({
+      shopName: 'YOUR SHOP NAME', payeeLabel: 'YOUR SHOP NAME', accent: '#14B37D', languages: ['en'],
+      ambient: { slideSeconds: 8, items, advance: 'key', index: 2 }, thanks: { seconds: 10 },
+    });
+    expect(playlist).toMatchObject({ manual: true, index: 2 });
+  });
+
+  it('skip unfinished slides', () => {
+    expect(readySlides([{ k: 'rating', url: '' }, { k: 'standee' }, { k: 'text', text: { en: 'Hi' } }], false)).toEqual([{ k: 'text', text: { en: 'Hi' } }]);
+    expect(readySlides([{ k: 'standee' }], false)).toEqual([{ k: 'logo' }]);
   });
 });
 

@@ -1,7 +1,7 @@
 import { DEFAULT_MAX_RUPEES } from './amount';
 import type { Rotation } from './profiles';
 import { DEFAULT_REF_PREFIX, isValidRefPrefix } from './refs';
-import type { AmbientItem, LocalText } from './scenes';
+import { type AmbientItem, type LocalText, type SlideAdvance, TEXT_SIZES, type TextSize } from './scenes';
 
 export const CONFIG_SCHEMA_VERSION = 1;
 
@@ -34,11 +34,12 @@ export interface CounterPayConfig {
     payeeLabel: string;
     addMam: boolean;
   };
-  shortcuts: { summon: string; clear: string };
+  /** `next` changes the slide when slides change with a key; empty means none. */
+  shortcuts: { summon: string; clear: string; next: string };
   pay: { ttlSeconds: number; maxRupees: number; refPrefix: string };
   thanks: { seconds: number; text?: LocalText };
   displays: DisplayConfig[];
-  ambient: { slideSeconds: number; items: AmbientItem[] };
+  ambient: { slideSeconds: number; items: AmbientItem[]; advance: SlideAdvance };
   brand: { shopName: string; logoPath: string; accent: string };
   /** Customer display languages, primary first; two are shown together. The app itself is in English. */
   language: { display: string[] };
@@ -70,13 +71,14 @@ export function defaultConfig(secrets: ConfigSecrets): CounterPayConfig {
   return {
     schemaVersion: CONFIG_SCHEMA_VERSION,
     upi: { baseUri: '', payeeLabel: '', addMam: false },
-    shortcuts: { summon: 'F9', clear: 'Shift+F9' },
+    shortcuts: { summon: 'F9', clear: 'Shift+F9', next: '' },
     pay: { ttlSeconds: 180, maxRupees: DEFAULT_MAX_RUPEES, refPrefix: DEFAULT_REF_PREFIX },
     thanks: { seconds: 10 },
     displays: [{ id: 'sim', driver: 'simulator', enabled: true, name: 'Simulator' }],
     ambient: {
       slideSeconds: 8,
       items: [{ k: 'logo' }],
+      advance: 'auto',
     },
     brand: { shopName: '', logoPath: '', accent: DEFAULT_ACCENT },
     language: { display: ['en'] },
@@ -116,6 +118,10 @@ function localText(value: unknown): LocalText | undefined {
   return entries.length ? Object.fromEntries(entries) : undefined;
 }
 
+function sized<T extends object>(item: T, value: Record<string, unknown>): T {
+  return TEXT_SIZES.includes(value.size as TextSize) ? { ...item, size: value.size as TextSize } : item;
+}
+
 function ambientItem(value: unknown): AmbientItem | null {
   if (!isObject(value)) return null;
   switch (value.k) {
@@ -124,17 +130,17 @@ function ambientItem(value: unknown): AmbientItem | null {
     case 'rating': {
       if (typeof value.url !== 'string') return null;
       const text = localText(value.text);
-      return text ? { k: 'rating', url: value.url, text } : { k: 'rating', url: value.url };
+      return sized<AmbientItem>(text ? { k: 'rating', url: value.url, text } : { k: 'rating', url: value.url }, value);
     }
     case 'text': {
       const text = localText(value.text);
-      return text ? { k: 'text', text } : null;
+      return text ? sized<AmbientItem>({ k: 'text', text }, value) : null;
     }
     case 'image':
       return typeof value.src === 'string' ? { k: 'image', src: value.src } : null;
     case 'standee': {
       const text = localText(value.text);
-      return text ? { k: 'standee', text } : { k: 'standee' };
+      return sized<AmbientItem>(text ? { k: 'standee', text } : { k: 'standee' }, value);
     }
     default:
       return null;
@@ -206,6 +212,7 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
     shortcuts: {
       summon: str(shortcuts.summon, d.shortcuts.summon) || d.shortcuts.summon,
       clear: str(shortcuts.clear, d.shortcuts.clear) || d.shortcuts.clear,
+      next: str(shortcuts.next, ''),
     },
     pay: {
       ttlSeconds: int(pay.ttlSeconds, d.pay.ttlSeconds, 30, 900),
@@ -217,6 +224,7 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
     ambient: {
       slideSeconds: int(ambient.slideSeconds, d.ambient.slideSeconds, 3, 600),
       items: items.length ? items : d.ambient.items,
+      advance: ambient.advance === 'key' ? 'key' : 'auto',
     },
     brand: {
       shopName: str(brand.shopName, d.brand.shopName),

@@ -94,7 +94,7 @@ export interface AppSnapshot {
   scene: SceneView;
   displays: DisplayView[];
   today: { count: number; totalPaise: number };
-  shortcuts: { summon: ShortcutState; clear: ShortcutState; paused: boolean };
+  shortcuts: { summon: ShortcutState; clear: ShortcutState; next: ShortcutState; paused: boolean };
   payee: PayeeInfo | null;
   onboarding: OnboardingState;
   /** Addresses a phone on the shop Wi-Fi opens to pair, when a Web display is enabled. */

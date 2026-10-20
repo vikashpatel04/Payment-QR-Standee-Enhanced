@@ -37,13 +37,32 @@ export type Scene = AmbientScene | PayScene | ThanksScene;
 /** Text in several languages, keyed by language code: `{ en: "…", hi: "…" }`. */
 export type LocalText = Record<string, string>;
 
+/** How big a slide's words are drawn: small, medium (the default) or large. */
+export type TextSize = 's' | 'm' | 'l';
+export const TEXT_SIZES: readonly TextSize[] = ['s', 'm', 'l'];
+export const TEXT_SCALE: Readonly<Record<TextSize, number>> = { s: 0.8, m: 1, l: 1.25 };
+
 export type AmbientItem =
   | { k: 'logo' }
-  | { k: 'rating'; url: string; text?: LocalText }
-  | { k: 'text'; text: LocalText }
+  | { k: 'rating'; url: string; text?: LocalText; size?: TextSize }
+  | { k: 'text'; text: LocalText; size?: TextSize }
   | { k: 'image'; src: string }
   /** The shop's own UPI QR with no amount, like the printed standee: the customer types the amount. */
-  | { k: 'standee'; text?: LocalText };
+  | { k: 'standee'; text?: LocalText; size?: TextSize };
+
+/** The slides a display can actually show: unfinished ones (no link, no words, no payee) are skipped. */
+export function readySlides(items: AmbientItem[], hasStandee: boolean): AmbientItem[] {
+  const usable = items.filter(
+    (item) =>
+      (item.k !== 'rating' || item.url) &&
+      (item.k !== 'text' || Object.values(item.text).some(Boolean)) &&
+      (item.k !== 'standee' || hasStandee),
+  );
+  return usable.length ? usable : [{ k: 'logo' }];
+}
+
+/** How slides change while no QR is showing: on a timer, or each time the cashier presses a key. */
+export type SlideAdvance = 'auto' | 'key';
 
 /** Everything a display needs besides the scene itself: branding, wording and the playlist. */
 export interface DisplayContent {
@@ -55,7 +74,8 @@ export interface DisplayContent {
   logoUrl?: string;
   /** Display languages, primary first. Two languages are shown together. */
   languages: string[];
-  ambient: { slideSeconds: number; items: AmbientItem[] };
+  /** `index` is the slide to show when `advance` is `key`. */
+  ambient: { slideSeconds: number; items: AmbientItem[]; advance?: SlideAdvance; index?: number };
   thanks: { seconds: number; ratingUrl?: string };
   /** The shop's standee QR (no amount), for the standee slide. Absent until a payee is set up. */
   standeeUri?: string;

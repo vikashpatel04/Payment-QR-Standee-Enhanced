@@ -1,5 +1,5 @@
 import type { AmbientItem, AmbientReason, DisplayContent, Scene, SceneKind } from './scenes';
-import { secondsLeft } from './scenes';
+import { secondsLeft, TEXT_SIZES, type TextSize } from './scenes';
 
 /**
  * Wire protocol v1: one JSON object per line. Amounts are integer paise.
@@ -49,6 +49,9 @@ export interface PlaylistMessage {
   items: WireAmbientItem[];
   /** Seconds per slide. Devices may use a slower rate their panel needs. */
   slide?: number;
+  /** Slides change only when the cashier presses a key: show slide `index`. */
+  manual?: boolean;
+  index?: number;
 }
 
 export interface PingMessage {
@@ -188,15 +191,19 @@ export function toWirePlaylist(items: AmbientItem[]): WireAmbientItem[] {
       case 'logo':
         return { k: 'logo' };
       case 'rating':
-        return { ...(item.text ?? {}), k: 'rating', url: item.url };
+        return { ...(item.text ?? {}), k: 'rating', url: item.url, ...(item.size ? { size: item.size } : {}) };
       case 'text':
-        return { ...item.text, k: 'text' };
+        return { ...item.text, k: 'text', ...(item.size ? { size: item.size } : {}) };
       case 'image':
         return { k: 'image', src: item.src };
       case 'standee':
-        return { ...(item.text ?? {}), k: 'standee' };
+        return { ...(item.text ?? {}), k: 'standee', ...(item.size ? { size: item.size } : {}) };
     }
   });
+}
+
+function withSize(item: AmbientItem, size: string | undefined): AmbientItem {
+  return TEXT_SIZES.includes(size as TextSize) ? ({ ...item, size } as AmbientItem) : item;
 }
 
 export function fromWirePlaylist(items: WireAmbientItem[]): AmbientItem[] {
@@ -205,18 +212,19 @@ export function fromWirePlaylist(items: WireAmbientItem[]): AmbientItem[] {
       case 'logo':
         return [{ k: 'logo' }];
       case 'rating': {
-        const { k: _k, url, ...text } = item;
-        return [Object.keys(text).length ? { k: 'rating', url, text: text as WireText } : { k: 'rating', url }];
+        const { k: _k, url, size, ...text } = item as typeof item & { size?: string };
+        const base: AmbientItem = Object.keys(text).length ? { k: 'rating', url, text: text as WireText } : { k: 'rating', url };
+        return [withSize(base, size)];
       }
       case 'text': {
-        const { k: _k, ...text } = item;
-        return [{ k: 'text', text: text as WireText }];
+        const { k: _k, size, ...text } = item as typeof item & { size?: string };
+        return [withSize({ k: 'text', text: text as WireText }, size)];
       }
       case 'image':
         return [{ k: 'image', src: item.src }];
       case 'standee': {
-        const { k: _k, ...text } = item;
-        return [Object.keys(text).length ? { k: 'standee', text: text as WireText } : { k: 'standee' }];
+        const { k: _k, size, ...text } = item as typeof item & { size?: string };
+        return [withSize(Object.keys(text).length ? { k: 'standee', text: text as WireText } : { k: 'standee' }, size)];
       }
       default:
         return [];
@@ -239,7 +247,13 @@ export function contentToMessages(content: DisplayContent): [ContentMessage, Pla
   if (content.standeeUri) message.standee = content.standeeUri;
   return [
     message,
-    { v: 1, t: 'playlist', items: toWirePlaylist(content.ambient.items), slide: content.ambient.slideSeconds },
+    {
+      v: 1,
+      t: 'playlist',
+      items: toWirePlaylist(content.ambient.items),
+      slide: content.ambient.slideSeconds,
+      ...(content.ambient.advance === 'key' ? { manual: true, index: content.ambient.index ?? 0 } : {}),
+    },
   ];
 }
 
@@ -263,13 +277,13 @@ function isWireItem(value: unknown): value is WireAmbientItem {
     case 'logo':
       return true;
     case 'rating':
-      return typeof value.url === 'string' && isStringRecord(value, ['k', 'url']);
+      return typeof value.url === 'string' && isStringRecord(value, ['k', 'url', 'size']);
     case 'text':
-      return isStringRecord(value, ['k']);
+      return isStringRecord(value, ['k', 'size']);
     case 'image':
       return typeof value.src === 'string';
     case 'standee':
-      return isStringRecord(value, ['k']);
+      return isStringRecord(value, ['k', 'size']);
     default:
       return false;
   }

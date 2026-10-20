@@ -1,4 +1,4 @@
-import { type AmbientItem, type DisplayContent, formatINR, type Scene } from '@counterpay/core';
+import { type DisplayContent, formatINR, readySlides, type Scene, TEXT_SCALE, type TextSize } from '@counterpay/core';
 import QRCode from 'qrcode';
 import { type ReactNode, useLayoutEffect, useRef } from 'react';
 import { say } from '../Bilingual';
@@ -136,6 +136,12 @@ const NAME_LINE_HEIGHT = 1.15;
  * on its line; a single word too wide even then is narrowed rather than split.
  */
 function ShopName({ name, max, lines = 2 }: { name: string | undefined; max: number; lines?: number }) {
+  if (!name) return null;
+  return <Words text={name} max={max} lines={lines} weight={700} />;
+}
+
+/** Text over up to `lines` lines, broken only between words, shrunk (then narrowed) until it fits. */
+function Words({ text: words, max, lines, weight, lang }: { text: string; max: number; lines: number; weight: number; lang?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const text = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -147,7 +153,7 @@ function ShopName({ name, max, lines = 2 }: { name: string | undefined; max: num
     let squeeze = 1;
     const apply = () => {
       el.style.fontSize = `${size}px`;
-      el.style.fontWeight = squeeze < 1 ? '800' : '700';
+      el.style.fontWeight = squeeze < 1 ? String(Math.max(weight, 800)) : String(weight);
       // Narrowing: lay the words out in a wider box, then scale it back to the real width.
       inner.style.width = `${100 / squeeze}%`;
       inner.style.transform = squeeze < 1 ? `scaleX(${squeeze})` : '';
@@ -164,11 +170,10 @@ function ShopName({ name, max, lines = 2 }: { name: string | undefined; max: num
       apply();
     }
   });
-  if (!name) return null;
   return (
-    <div ref={box} className="name" style={{ fontSize: max, fontWeight: 700, lineHeight: NAME_LINE_HEIGHT }}>
+    <div ref={box} className="name" style={{ fontSize: max, fontWeight: weight, lineHeight: NAME_LINE_HEIGHT }} lang={lang}>
       <div ref={text} className="nameText">
-        {name}
+        {words}
       </div>
     </div>
   );
@@ -241,7 +246,7 @@ function Pay({ input, langs }: { input: FrameInput; langs: string[] }) {
 }
 
 /** The shop's own standee QR, no amount, with the shop name and the shop's message (for example "Happy Shopping!"). */
-function Standee({ input, langs, text }: { input: FrameInput; langs: string[]; text?: Record<string, string> }) {
+function Standee({ input, langs, text, size }: { input: FrameInput; langs: string[]; text?: Record<string, string>; size?: TextSize | undefined }) {
   const { content, width, height } = input;
   const [first = 'en'] = langs;
   const unit = Math.min(width, height);
@@ -249,7 +254,7 @@ function Standee({ input, langs, text }: { input: FrameInput; langs: string[]; t
     <QrScreen input={input} uri={content?.standeeUri}>
       <ShopName name={content?.shopName} max={Math.round(unit * 0.14)} />
       {text ? (
-        <TwoLines text={text} langs={langs} max={Math.round(unit * 0.12)} />
+        <TwoLines text={text} langs={langs} max={Math.round(unit * 0.12)} size={size} />
       ) : (
         <Fit max={Math.round(unit * 0.09)} weight={600} lang={first}>
           {say(first, 'display.scanToPay')}
@@ -259,40 +264,24 @@ function Standee({ input, langs, text }: { input: FrameInput; langs: string[]; t
   );
 }
 
-function ready(items: AmbientItem[], content: DisplayContent | null): AmbientItem[] {
-  const usable = items.filter(
-    (item) =>
-      (item.k !== 'rating' || item.url) &&
-      (item.k !== 'text' || Object.values(item.text).some(Boolean)) &&
-      (item.k !== 'standee' || content?.standeeUri),
-  );
-  return usable.length ? usable : [{ k: 'logo' }];
-}
-
-function TwoLines({ k, text, langs, max }: { k?: string; text?: Record<string, string>; langs: string[]; max: number }) {
+/** A message in the first language (up to three lines) and, smaller, the second (up to two). */
+function TwoLines({ k, text, langs, max, size }: { k?: string; text?: Record<string, string>; langs: string[]; max: number; size?: TextSize }) {
   const [first = 'en', second] = langs;
   const pick = (lang: string) => (text ? text[lang] ?? '' : k ? say(lang, k) : '');
   const one = pick(first);
   const two = second ? pick(second) : '';
+  const big = Math.round(max * TEXT_SCALE[size ?? 'm']);
   return (
     <>
-      {one && (
-        <Fit max={max} weight={700} lang={first}>
-          {one}
-        </Fit>
-      )}
-      {two && two !== one && (
-        <Fit max={Math.round(max * 0.7)} weight={500} lang={second}>
-          {two}
-        </Fit>
-      )}
+      {one && <Words text={one} max={big} lines={3} weight={700} lang={first} />}
+      {two && two !== one && <Words text={two} max={Math.max(11, Math.round(big * 0.8))} lines={2} weight={500} lang={second} />}
     </>
   );
 }
 
 function Ambient({ input, langs }: { input: FrameInput; langs: string[] }) {
   const { content, width, height, slide } = input;
-  const items = ready(content?.ambient.items ?? [], content);
+  const items = readySlides(content?.ambient.items ?? [], Boolean(content?.standeeUri));
   const item = items[slide % items.length]!;
   const unit = Math.min(width, height);
   switch (item.k) {
@@ -310,13 +299,13 @@ function Ambient({ input, langs }: { input: FrameInput; langs: string[] }) {
     case 'rating':
       return (
         <QrScreen input={input} uri={item.url}>
-          <TwoLines k={item.text ? undefined : 'display.rateUs'} text={item.text} langs={langs} max={Math.round(unit * 0.13)} />
+          <TwoLines k={item.text ? undefined : 'display.rateUs'} text={item.text} langs={langs} max={Math.round(unit * 0.13)} size={item.size} />
         </QrScreen>
       );
     case 'text':
       return (
         <div className="center" style={{ padding: 6, gap: 4 }}>
-          <TwoLines text={item.text} langs={langs} max={Math.round(unit * 0.2)} />
+          <TwoLines text={item.text} langs={langs} max={Math.round(unit * 0.2)} size={item.size} />
         </div>
       );
     case 'image':
@@ -326,7 +315,7 @@ function Ambient({ input, langs }: { input: FrameInput; langs: string[] }) {
         </div>
       );
     case 'standee':
-      return <Standee input={input} langs={langs} {...(item.text ? { text: item.text } : {})} />;
+      return <Standee input={input} langs={langs} {...(item.text ? { text: item.text } : {})} size={item.size} />;
   }
 }
 

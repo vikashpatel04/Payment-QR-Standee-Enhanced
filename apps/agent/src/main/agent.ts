@@ -16,6 +16,7 @@ import {
   type PaySource,
   PROFILE_PRESETS,
   readPayee,
+  readySlides,
   type Scene,
   SceneMachine,
   splitAddress,
@@ -110,6 +111,8 @@ export class Agent {
   private serverError: AppSnapshot['serverError'] = null;
   /** Read once at launch: a port change applies on the next start. */
   private readonly ports: { local: number; lan: number };
+  /** The standby slide showing, when slides change with a key. */
+  private slideIndex = 0;
   private snapshotTimer: NodeJS.Timeout | null = null;
   private housekeeping: NodeJS.Timeout | null = null;
   private quitting = false;
@@ -159,6 +162,7 @@ export class Agent {
     this.shortcuts = new Shortcuts({
       summon: () => this.summon(),
       clear: () => this.clearFromShortcut(),
+      next: () => this.nextSlide(),
     });
 
     this.updater = new Updater({
@@ -231,11 +235,11 @@ export class Agent {
       installUpdate: () => this.installUpdate(),
       quit: () => app.quit(),
     });
-    this.shortcuts.apply(config.shortcuts);
+    this.shortcuts.apply(this.wantedShortcuts(config));
     this.registerIpc();
     this.applyLoginItem(config);
 
-    powerMonitor.on('resume', () => this.shortcuts.apply(this.config.get().shortcuts));
+    powerMonitor.on('resume', () => this.shortcuts.apply(this.wantedShortcuts(this.config.get())));
     if (this.state.get('seenVersion') === undefined) this.state.set('seenVersion', app.getVersion());
     this.updater.start();
     this.housekeeping = setInterval(() => this.tidyHistory(), 6 * 3_600_000);
@@ -362,7 +366,9 @@ export class Agent {
   // ---------- Config, content and displays ----------
 
   private onConfigChange(config: CounterPayConfig, previous: CounterPayConfig): void {
-    if (JSON.stringify(config.shortcuts) !== JSON.stringify(previous.shortcuts)) this.shortcuts.apply(config.shortcuts);
+    if (JSON.stringify(this.wantedShortcuts(config)) !== JSON.stringify(this.wantedShortcuts(previous))) {
+      this.shortcuts.apply(this.wantedShortcuts(config));
+    }
     this.revokeStaleTokens(config);
     this.displays.setContent(this.content());
     void this.displays.sync(config.displays).then(() => this.updateLan());
@@ -381,6 +387,21 @@ export class Agent {
     }
   }
 
+  /** The "next slide" key is only taken from Windows while slides change with a key. */
+  private wantedShortcuts(config: CounterPayConfig): { summon: string; clear: string; next: string } {
+    const { summon, clear, next } = config.shortcuts;
+    return { summon, clear, next: config.ambient.advance === 'key' ? next : '' };
+  }
+
+  /** The cashier's key: every display moves to the next standby slide (not while a QR shows). */
+  private nextSlide(): void {
+    const config = this.config.get();
+    if (config.ambient.advance !== 'key' || this.machine.current.kind !== 'ambient') return;
+    const count = readySlides(config.ambient.items, isPayeeConfigured(config)).length;
+    this.slideIndex = (this.slideIndex + 1) % Math.max(1, count);
+    this.displays.setContent(this.content());
+  }
+
   private logoFile(): string | null {
     const path = this.config.get().brand.logoPath;
     return path && existsSync(path) ? path : null;
@@ -397,7 +418,12 @@ export class Agent {
       accent: config.brand.accent,
       ...(logo ? { logoUrl: `/content/logo?v=${Math.round(statSync(logo).mtimeMs)}` } : {}),
       languages: config.language.display,
-      ambient: { slideSeconds: config.ambient.slideSeconds, items: config.ambient.items },
+      ambient: {
+        slideSeconds: config.ambient.slideSeconds,
+        items: config.ambient.items,
+        advance: config.ambient.advance,
+        index: this.slideIndex,
+      },
       thanks: { seconds: config.thanks.seconds, ...(rating && rating.k === 'rating' ? { ratingUrl: rating.url } : {}) },
       ...(isPayeeConfigured(config) ? { standeeUri: config.upi.baseUri } : {}),
     };

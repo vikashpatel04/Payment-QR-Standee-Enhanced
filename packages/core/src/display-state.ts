@@ -16,6 +16,9 @@ export interface DisplayState {
   content: ContentMessage | null;
   playlist: AmbientItem[];
   slideSeconds: number;
+  /** Slides change only on the cashier's key: show `slideIndex`. */
+  manual: boolean;
+  slideIndex: number;
   scene: DisplayScene;
   /** When the PC was last heard from. */
   lastHeard: number;
@@ -31,6 +34,8 @@ export function initialDisplayState(now: number): DisplayState {
     content: null,
     playlist: [],
     slideSeconds: DEFAULT_SLIDE_SECONDS,
+    manual: false,
+    slideIndex: 0,
     scene: { kind: 'ambient', reason: 'idle', since: now },
     lastHeard: now,
     testUntil: null,
@@ -69,7 +74,13 @@ export function applyPcMessage(state: DisplayState, message: PcMessage, now: num
       return { state: { ...heard, content: message }, replies: [] };
     case 'playlist':
       return {
-        state: { ...heard, playlist: fromWirePlaylist(message.items), slideSeconds: message.slide ?? state.slideSeconds },
+        state: {
+          ...heard,
+          playlist: fromWirePlaylist(message.items),
+          slideSeconds: message.slide ?? state.slideSeconds,
+          manual: message.manual === true,
+          slideIndex: message.index ?? 0,
+        },
         replies: [],
       };
     case 'test':
