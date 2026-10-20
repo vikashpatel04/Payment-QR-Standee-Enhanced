@@ -234,6 +234,10 @@
       "newCode": "New code",
       "testPattern": "Test pattern",
       "remove": "Remove",
+      "removing": "Removing…",
+      "forgetFailed": "Couldn't reach the display, so it still remembers this PC. Make sure it's on and on the same network (or the hotspot is on), then try again. Remove anyway only if the display is broken or gone: this PC can still pair with it again later, but another PC would need it reset first.",
+      "tryAgain": "Try again",
+      "removeAnyway": "Remove anyway",
       "lastAck": "Last reply in {{ms}} ms"
     },
     "content": {

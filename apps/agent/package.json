@@ -1,7 +1,7 @@
 {
   "name": "@counterpay/agent",
   "productName": "Counter Pay",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "description": "Counter Pay: show a fixed-amount UPI QR on a customer display with one shortcut.",
   "author": "Counter Pay contributors",

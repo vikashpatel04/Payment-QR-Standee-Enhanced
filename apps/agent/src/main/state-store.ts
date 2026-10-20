@@ -11,6 +11,8 @@ interface AgentState {
   seenVersion?: string;
   /** Paired Wi-Fi displays: token → the display and the pairing code it was issued for. */
   webTokens?: Record<string, { id: string; code: string }>;
+  /** Wi-Fi displays removed while unreachable: device id → key, so pairing them again needs no reset. */
+  wifiKeys?: Record<string, string>;
 }
 
 /** Runtime state that must survive restarts but isn't a setting: counters, pairings, onboarding. */

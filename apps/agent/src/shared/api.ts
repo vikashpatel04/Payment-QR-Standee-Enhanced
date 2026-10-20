@@ -170,8 +170,11 @@ export interface CounterPayApi {
       discover(): Promise<WifiDisplayFound[]>;
       /** Pairs with the display at `address` (host or host:port) using the code on its screen, and adds it. */
       pair(address: string, code: string): Promise<WifiPairResult>;
-      /** Removes a Wi-Fi display and tells it to forget this PC, so it can be paired again. */
-      forget(displayId: string): Promise<void>;
+      /**
+       * Tells a Wi-Fi display to forget this PC, then removes it. If the display can't be
+       * reached it stays, unless `force`.
+       */
+      forget(displayId: string, force?: boolean): Promise<{ ok: true } | { ok: false; reason: 'unreachable' }>;
     };
     restoreConfig(): Promise<{ restored: boolean; error?: string }>;
     updates: {

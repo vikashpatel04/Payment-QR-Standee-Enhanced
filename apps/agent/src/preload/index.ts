@@ -35,7 +35,7 @@ const api: CounterPayApi = {
     wifi: {
       discover: () => ipcRenderer.invoke(IPC.wifiDiscover),
       pair: (address, code) => ipcRenderer.invoke(IPC.wifiPair, address, code),
-      forget: (displayId) => ipcRenderer.invoke(IPC.wifiForget, displayId),
+      forget: (displayId, force) => ipcRenderer.invoke(IPC.wifiForget, displayId, force),
     },
     restoreConfig: () => ipcRenderer.invoke(IPC.restoreConfig),
     updates: {

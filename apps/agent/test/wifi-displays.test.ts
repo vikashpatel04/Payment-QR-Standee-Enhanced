@@ -1,7 +1,7 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { createServer, type Server, type Socket } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DisplayRefused, pair, wifiPorts } from '../src/main/wifi-displays';
+import { DisplayRefused, keyWorks, pair, wifiPorts } from '../src/main/wifi-displays';
 
 /** A display on a local port that follows docs/DISPLAY-PROTOCOL.md (pairing and authentication only). */
 class FakeDisplay {
@@ -116,6 +116,13 @@ describe('Wi-Fi displays', () => {
     const error = await ports.open(address).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(DisplayRefused);
     expect(error).toMatchObject({ reason: 'key', detail: 'unpaired' });
+  });
+
+  it('tells whether a display still knows this PC, for pairing it again without a reset', async () => {
+    const { id, key } = await pair(address, '482913');
+    expect(await keyWorks(address, id, key)).toBe(true);
+    expect(await keyWorks(address, id, '0'.repeat(64))).toBe(false);
+    expect(await keyWorks('127.0.0.1:1', id, key)).toBe(false);
   });
 
   it('refuses to talk to a different display that took the address', async () => {

@@ -239,6 +239,14 @@ function WifiPairing({ onClose }: { onClose: () => void }) {
 function DisplayCard({ view, snapshot }: { view: DisplayView; snapshot: AppSnapshot }) {
   const { t } = useTranslation();
   const { config, status } = view;
+  const [removing, setRemoving] = useState(false);
+  const [stuck, setStuck] = useState(false);
+  const forget = async (force: boolean) => {
+    setRemoving(true);
+    const result = await api.app.wifi.forget(config.id, force);
+    setRemoving(false);
+    setStuck(!result.ok);
+  };
   const secondary = snapshot.monitors.filter((m) => !m.primary);
 
   return (
@@ -343,18 +351,32 @@ function DisplayCard({ view, snapshot }: { view: DisplayView; snapshot: AppSnaps
             <button
               type="button"
               className={ui.danger}
+              disabled={removing}
               onClick={() =>
                 config.driver === 'wifi-frame'
-                  ? void api.app.wifi.forget(config.id)
+                  ? void forget(false)
                   : updateConfig({ displays: snapshot.config.displays.filter((d) => d.id !== config.id) })
               }
             >
-              {t('app.displays.remove')}
+              {t(removing ? 'app.displays.removing' : 'app.displays.remove')}
             </button>
           )}
           {status.lastAckMs !== undefined && <span className={ui.small}>{t('app.displays.lastAck', { ms: status.lastAckMs })}</span>}
           {status.fw && <span className={ui.small}>fw {status.fw}</span>}
         </div>
+        {stuck && (
+          <div className={ui.bannerBad}>
+            <div>{t('app.displays.forgetFailed')}</div>
+            <div className={ui.row} style={{ marginTop: 8 }}>
+              <button type="button" className={ui.button} disabled={removing} onClick={() => void forget(false)}>
+                {t('app.displays.tryAgain')}
+              </button>
+              <button type="button" className={ui.ghost} disabled={removing} onClick={() => void forget(true)}>
+                {t('app.displays.removeAnyway')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

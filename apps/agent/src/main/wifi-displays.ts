@@ -284,16 +284,30 @@ export async function pair(address: string, code: string): Promise<{ id: string;
   }
 }
 
-/** Tells a paired display to forget this PC, so it shows its pairing code again. Best effort. */
+/**
+ * Tells a paired display to forget this PC, so it shows its pairing code again. Throws
+ * DisplayRefused when the display can't be reached ('unreachable') or no longer knows this
+ * PC ('key', which means it has already forgotten it).
+ */
 export async function unpair(config: DisplayConfig): Promise<void> {
   if (!config.device || !config.key) return;
   const found = await discover({ timeoutMs: 1_000, hosts: hostsOf(config) });
   const address = found.find((d) => d.id === config.device)?.address ?? config.address;
-  if (!address) return;
+  if (!address) throw new DisplayRefused('unreachable');
   const link = await authenticate(address, config.device, config.key);
   link.send({ v: 1, t: 'unpair' });
   await new Promise((resolve) => setTimeout(resolve, 300));
   link.close();
+}
+
+/** Whether the display at `address` still accepts this key (it is still paired with this PC). */
+export async function keyWorks(address: string, deviceId: string, key: string): Promise<boolean> {
+  try {
+    (await authenticate(address, deviceId, key)).close();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function hostsOf(config: DisplayConfig): string[] {

@@ -44,7 +44,7 @@ import { ElectronWindowHost, listMonitors } from './display-windows';
 import { DisplayManager, type ShowOutcome } from './displays';
 import { OffscreenFrameRenderer } from './frame-renderer';
 import { listPorts, serialPorts } from './serial-ports';
-import { discover, DisplayRefused, pair, unpair, wifiPorts } from './wifi-displays';
+import { discover, DisplayRefused, keyWorks, pair, unpair, wifiPorts } from './wifi-displays';
 import { HistoryDb } from './history';
 import { t } from './i18n';
 import { logDir } from './log';
@@ -562,7 +562,7 @@ export class Agent {
     if (!isPairingCode(code.trim())) return { ok: false, reason: 'code' };
     const full = `${target.host}:${target.port}`;
     try {
-      const { id, key } = await pair(full, code.trim());
+      const { id, key } = await this.pairOrReuse(full, target.host, code.trim());
       const info = (await discover({ timeoutMs: 1_000, hosts: [target.host] })).find((d) => d.id === id);
       // Pairing again replaces the old entry for the same display.
       const displays = this.config.get().displays.filter((d) => !(d.driver === 'wifi-frame' && d.device === id));
@@ -592,13 +592,69 @@ export class Agent {
     }
   }
 
-  private async forgetWifi(id: string): Promise<void> {
+  /**
+   * Pairs with the code; or, if the display says it is already paired, checks whether it is
+   * paired with this PC (a display removed while it was unreachable) and simply uses it again.
+   */
+  private async pairOrReuse(address: string, host: string, code: string): Promise<{ id: string; key: string }> {
+    try {
+      return await pair(address, code);
+    } catch (error) {
+      if (!(error instanceof DisplayRefused) || error.reason !== 'paired') throw error;
+      const keys = this.state.get('wifiKeys') ?? {};
+      const found = await discover({ timeoutMs: 1_000, hosts: [host] });
+      for (const d of found) {
+        const key = keys[d.id];
+        if (key && (await keyWorks(d.address, d.id, key))) {
+          const { [d.id]: _used, ...rest } = keys;
+          this.state.set('wifiKeys', rest);
+          return { id: d.id, key };
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Removes a display. A Wi-Fi display is told to forget this PC first, and is only removed
+   * once it has; if it can't be reached, it stays, unless `force` (then its key is kept, so
+   * pairing it again later needs no reset).
+   */
+  private async forgetWifi(id: string, force = false): Promise<{ ok: true } | { ok: false; reason: 'unreachable' }> {
     const display = this.config.get().displays.find((d) => d.id === id);
-    if (!display) return;
-    this.config.update({ displays: this.config.get().displays.filter((d) => d.id !== id) });
-    if (display.driver !== 'wifi-frame') return;
-    // After its driver has let go: the display forgets this PC and shows its pairing code again.
-    await unpair(display).catch((error) => console.warn('[wifi] could not tell the display to forget this PC', error));
+    if (!display) return { ok: true };
+    const remove = () => this.config.update({ displays: this.config.get().displays.filter((d) => d.id !== id) });
+    if (display.driver !== 'wifi-frame') {
+      remove();
+      return { ok: true };
+    }
+    // Let its driver drop the connection first, so the display isn't busy with it.
+    if (display.enabled) {
+      this.config.update({ displays: this.config.get().displays.map((d) => (d.id === id ? { ...d, enabled: false } : d)) });
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+    let forgotten = false;
+    for (let attempt = 0; attempt < 3 && !forgotten; attempt++) {
+      if (attempt) await new Promise((resolve) => setTimeout(resolve, 1_500));
+      try {
+        await unpair(display);
+        forgotten = true;
+      } catch (error) {
+        // 'key': the display no longer knows this PC; it has already forgotten it.
+        if (error instanceof DisplayRefused && error.reason === 'key') forgotten = true;
+        else console.warn('[wifi] could not tell the display to forget this PC', error);
+      }
+    }
+    if (forgotten || force) {
+      if (!forgotten && display.device && display.key) {
+        this.state.set('wifiKeys', { ...(this.state.get('wifiKeys') ?? {}), [display.device]: display.key });
+      }
+      remove();
+      return { ok: true };
+    }
+    // Still paired: put it back as it was.
+    this.config.update({ displays: this.config.get().displays.map((d) => (d.id === id ? { ...d, enabled: display.enabled } : d)) });
+    return { ok: false, reason: 'unreachable' };
   }
 
   // ---------- IPC ----------
@@ -699,7 +755,7 @@ export class Agent {
       }));
     });
     handle(IPC.wifiPair, (address: string, code: string) => this.pairWifi(String(address), String(code)));
-    handle(IPC.wifiForget, (id: string) => this.forgetWifi(String(id)));
+    handle(IPC.wifiForget, (id: string, force?: boolean) => this.forgetWifi(String(id), force === true));
     handle(IPC.updateCheck, () => this.updater.check());
     handle(IPC.updateInstall, () => this.installUpdate());
     handle(IPC.whatsNewDismiss, () => {
