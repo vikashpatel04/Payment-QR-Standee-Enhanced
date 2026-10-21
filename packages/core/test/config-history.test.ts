@@ -38,7 +38,7 @@ describe('normalizeConfig', () => {
     expect(config.brand.accent).toBe('#14B37D');
     expect(config.updates).toEqual({ channel: 'stable', quietHours: ['22:00', '08:00'] });
     expect(config.displays.map((d) => d.id)).toEqual(['sim']);
-    expect(config.ambient.items).toEqual([{ k: 'logo' }]);
+    expect(config.ambient.items).toEqual([{ k: 'text', text: {} }, { k: 'logo' }]);
   });
 
   it('keeps valid displays and always keeps a simulator', () => {

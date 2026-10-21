@@ -132,10 +132,9 @@ function ambientItem(value: unknown): AmbientItem | null {
       const text = localText(value.text);
       return sized<AmbientItem>(text ? { k: 'rating', url: value.url, text } : { k: 'rating', url: value.url }, value);
     }
-    case 'text': {
-      const text = localText(value.text);
-      return text ? sized<AmbientItem>({ k: 'text', text }, value) : null;
-    }
+    case 'text':
+      // Kept even while empty: a slide just added has no words yet. Displays skip it until it has some.
+      return sized<AmbientItem>({ k: 'text', text: localText(value.text) ?? {} }, value);
     case 'image':
       return typeof value.src === 'string' ? { k: 'image', src: value.src } : null;
     case 'standee': {

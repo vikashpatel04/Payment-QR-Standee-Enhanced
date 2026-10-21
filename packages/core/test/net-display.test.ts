@@ -94,6 +94,11 @@ describe('standby slides', () => {
     expect(playlist).toMatchObject({ manual: true, index: 2 });
   });
 
+  it('keep a text slide that has no words yet, so it can be filled in', () => {
+    const config = normalizeConfig({ ambient: { items: [{ k: 'logo' }, { k: 'text', text: {} }] } }, secrets);
+    expect(config.ambient.items).toEqual([{ k: 'logo' }, { k: 'text', text: {} }]);
+  });
+
   it('skip unfinished slides', () => {
     expect(readySlides([{ k: 'rating', url: '' }, { k: 'standee' }, { k: 'text', text: { en: 'Hi' } }], false)).toEqual([{ k: 'text', text: { en: 'Hi' } }]);
     expect(readySlides([{ k: 'standee' }], false)).toEqual([{ k: 'logo' }]);
