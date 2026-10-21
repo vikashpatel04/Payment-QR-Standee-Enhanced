@@ -99,12 +99,23 @@ export class PopupWindow {
     this.platform.restoreForeground(this.previous);
   }
 
-  /** Enter accepted: focus goes back at once while the pill plays its check mark. */
+  /**
+   * Enter accepted: focus goes back at once. The pill stays on screen, without focus, until
+   * the displays confirm (an E-ink panel takes seconds) and it has played "Sent".
+   */
   sent(): void {
     if (this.phase !== 'open') return;
     this.phase = 'sent';
     if (!this.platform.restoreForeground(this.previous)) console.warn('[popup] Windows refused to give focus back after Enter');
     this.win.blur();
+    // Only if the displays never answer at all.
+    this.hideTimer = setTimeout(() => this.done(), 20_000);
+  }
+
+  /** The displays answered: the pill now plays "Sent" and fades. */
+  confirmed(): void {
+    if (this.phase !== 'sent') return;
+    this.clearHideTimer();
     // In case the renderer never reports the end of its animation.
     this.hideTimer = setTimeout(() => this.done(), 1500);
   }

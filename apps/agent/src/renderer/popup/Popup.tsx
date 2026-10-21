@@ -118,7 +118,10 @@ export function Popup() {
     }
 
     update({ phase: 'sending', invalid: null });
+    const opened = v.opened;
     const result = await api.popup.submit(parsed.paise);
+    // The shortcut opened the pill again while the displays were still answering: leave the new one alone.
+    if (viewRef.current.opened !== opened) return;
     if (!result.ok) {
       update({ phase: 'error', error: t(result.error === 'noPayee' ? 'popup.noPayee' : 'popup.failed') });
       return;

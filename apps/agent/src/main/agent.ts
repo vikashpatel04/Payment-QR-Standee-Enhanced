@@ -701,7 +701,9 @@ export class Agent {
       const started = this.startShow(Number(amountPaise), 'popup');
       if (!started.ok) return started;
       this.popup?.sent();
-      return { ok: true, reach: (await started.outcome).reach } satisfies SubmitResult;
+      const { reach } = await started.outcome;
+      this.popup?.confirmed();
+      return { ok: true, reach } satisfies SubmitResult;
     });
     on(IPC.popupCancel, () => this.popup?.cancel());
     on(IPC.popupDone, () => this.popup?.done());
