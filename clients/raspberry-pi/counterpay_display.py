@@ -29,7 +29,7 @@ import threading
 import time
 import uuid
 
-FW = "pi-1.0.0"
+FW = "pi-1.0.1"
 DISCOVERY_PORT = 5180
 TCP_PORT = 5181
 LINK_LOSS_S = 10
@@ -75,6 +75,9 @@ class MockPanel:
         time.sleep(0.05)
         return 1.0
 
+    def rest(self):
+        pass
+
     def show_text(self, lines, rot):
         text = " | ".join(lines)
         log.info("screen: %s", text)
@@ -117,9 +120,12 @@ class WavesharePanel:
             self.epd.display(buffer, self.epd.getbuffer(blank))
         else:
             self.epd.display(buffer)
-        took = time.monotonic() - started
+        return time.monotonic() - started
+
+    def rest(self):
+        # Waveshare's sleep() waits two seconds after the picture is already showing, so it
+        # runs after the ack (see Display._worker), not as part of drawing.
         self.epd.sleep()
-        return took
 
     def show_bits(self, bits, w, h, rot):
         image = self.Image.frombytes("1", (w, h), bits, "raw", "1;I")
@@ -303,6 +309,10 @@ class Display:
                 job()
             except Exception:  # A panel error must not stop the display.
                 log.exception("drawing failed")
+            try:
+                self.panel.rest()
+            except Exception:
+                log.exception("could not put the panel to sleep")
 
     def _note(self, took):
         self.panel_ok = took >= SILENT_REFRESH_S
