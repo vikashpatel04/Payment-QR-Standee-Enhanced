@@ -103,7 +103,7 @@ export class PopupWindow {
   sent(): void {
     if (this.phase !== 'open') return;
     this.phase = 'sent';
-    this.platform.restoreForeground(this.previous);
+    if (!this.platform.restoreForeground(this.previous)) console.warn('[popup] Windows refused to give focus back after Enter');
     this.win.blur();
     // In case the renderer never reports the end of its animation.
     this.hideTimer = setTimeout(() => this.done(), 1500);
@@ -113,8 +113,16 @@ export class PopupWindow {
   done(): void {
     this.clearHideTimer();
     if (this.phase === 'open') return;
+    const wasSent = this.phase === 'sent';
     this.phase = 'hidden';
     this.win.hide();
+    // While the pill waited for the displays (an E-ink panel takes seconds), one of this app's
+    // own windows may have taken focus. Give it back to where the cashier was, but only if
+    // focus is still ours or nobody's, so a click into another program is never overridden.
+    if (wasSent && this.platform.foregroundIsOursOrNone()) {
+      console.warn('[popup] focus was with Counter Pay after the QR was sent; giving it back');
+      this.platform.restoreForeground(this.previous);
+    }
   }
 
   private onBlur(): void {
