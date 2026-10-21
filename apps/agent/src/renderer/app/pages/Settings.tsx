@@ -207,6 +207,9 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
         <Setting name={t('app.settings.startAtLogin')} hint={t('app.settings.startAtLoginHint')}>
           <Toggle on={config.startAtLogin} label={t('app.settings.startAtLogin')} onChange={(startAtLogin) => updateConfig({ startAtLogin })} />
         </Setting>
+        <Setting name={t('app.settings.reduceMotion')} hint={t('app.settings.reduceMotionHint')}>
+          <Toggle on={config.reduceMotion} label={t('app.settings.reduceMotion')} onChange={(reduceMotion) => updateConfig({ reduceMotion })} />
+        </Setting>
         <Setting name={t('app.settings.retention')}>
           <select
             className={ui.select}

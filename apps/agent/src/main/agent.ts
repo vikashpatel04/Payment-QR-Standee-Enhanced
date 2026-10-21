@@ -307,6 +307,7 @@ export class Agent {
       maxRupees: config.pay.maxRupees,
       reach: this.displays.reach(),
       payeeReady: isPayeeConfigured(config),
+      reduceMotion: config.reduceMotion,
     };
     this.popup.open(info);
   }
@@ -317,12 +318,12 @@ export class Agent {
 
   private clearFromShortcut(): void {
     const cleared = this.clear();
-    this.toast?.show({ text: t(cleared ? 'toast.cleared' : 'toast.nothingToClear'), tone: 'info' });
+    this.toast?.show({ reduceMotion: this.config.get().reduceMotion, text: t(cleared ? 'toast.cleared' : 'toast.nothingToClear'), tone: 'info' });
   }
 
   private togglePause(): void {
     this.shortcuts.setPaused(!this.shortcuts.isPaused);
-    this.toast?.show({ text: t(this.shortcuts.isPaused ? 'toast.shortcutsPaused' : 'toast.shortcutsResumed'), tone: 'info' });
+    this.toast?.show({ reduceMotion: this.config.get().reduceMotion, text: t(this.shortcuts.isPaused ? 'toast.shortcutsPaused' : 'toast.shortcutsResumed'), tone: 'info' });
     this.tray?.refresh();
     this.pushSnapshot();
   }
@@ -339,13 +340,13 @@ export class Agent {
           : state.status === 'ready'
             ? 'toast.updateReady'
             : 'toast.updateFailed';
-    this.toast?.show({ text: t(key, { version: state.version ?? '' }), tone: state.status === 'error' ? 'warn' : 'info' });
+    this.toast?.show({ reduceMotion: this.config.get().reduceMotion, text: t(key, { version: state.version ?? '' }), tone: state.status === 'error' ? 'warn' : 'info' });
   }
 
   /** User-asked restart into the update. Never while a customer is looking at a QR. */
   private installUpdate(): boolean {
     if (this.machine.current.kind === 'pay') {
-      this.toast?.show({ text: t('toast.updateAfterQr'), tone: 'warn' });
+      this.toast?.show({ reduceMotion: this.config.get().reduceMotion, text: t('toast.updateAfterQr'), tone: 'warn' });
       return false;
     }
     return this.updater.install();

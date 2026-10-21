@@ -1,5 +1,5 @@
 import type { AppSnapshot } from '@shared/api';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../shared/api';
 import styles from './app.module.css';
@@ -85,6 +85,10 @@ function Sidebar({ page, go, snapshot }: { page: Page; go: (page: Page) => void;
 export function App() {
   const snapshot = useSnapshot();
   const [page, setPage] = useState<Page>('home');
+  const reduceMotion = snapshot?.config.reduceMotion === true;
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-reduce-motion', reduceMotion);
+  }, [reduceMotion]);
 
   if (!snapshot) return <div className={styles.loading} />;
   if (!snapshot.onboarding.completed) return <Onboarding snapshot={snapshot} />;

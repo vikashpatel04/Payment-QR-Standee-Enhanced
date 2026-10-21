@@ -27,3 +27,11 @@ body {
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Settings > Reduce animations. */
+:root[data-reduce-motion] *,
+:root[data-reduce-motion] *::before,
+:root[data-reduce-motion] *::after {
+  transition: none !important;
+  animation: none !important;
+}

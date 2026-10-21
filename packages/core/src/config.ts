@@ -49,6 +49,8 @@ export interface CounterPayConfig {
   /** Local display server (127.0.0.1) and Wi-Fi display server. Changes apply on restart. */
   server: { localPort: number; lanPort: number };
   startAtLogin: boolean;
+  /** Plain fades instead of movement in the popup, toast and window, for slow PCs or by preference. */
+  reduceMotion: boolean;
 }
 
 export interface ConfigSecrets {
@@ -87,6 +89,7 @@ export function defaultConfig(secrets: ConfigSecrets): CounterPayConfig {
     updates: { channel: 'stable', quietHours: ['22:00', '08:00'] },
     server: { localPort: DEFAULT_LOCAL_PORT, lanPort: DEFAULT_LAN_PORT },
     startAtLogin: true,
+    reduceMotion: false,
   };
 }
 
@@ -236,6 +239,7 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
     updates: { channel: updates.channel === 'beta' ? 'beta' : 'stable', quietHours },
     server: { localPort, lanPort: lanPort === localPort ? (localPort === 65535 ? 65534 : localPort + 1) : lanPort },
     startAtLogin: bool(r.startAtLogin, d.startAtLogin),
+    reduceMotion: bool(r.reduceMotion, d.reduceMotion),
   };
 }
 

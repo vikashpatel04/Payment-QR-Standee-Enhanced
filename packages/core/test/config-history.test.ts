@@ -66,6 +66,12 @@ describe('normalizeConfig', () => {
   it('upper-cases the reference prefix', () => {
     expect(normalizeConfig({ pay: { refPrefix: 'dt' } }, secrets).pay.refPrefix).toBe('DT');
   });
+
+  it('keeps animations on unless the shop turns them down', () => {
+    expect(normalizeConfig({}, secrets).reduceMotion).toBe(false);
+    expect(normalizeConfig({ reduceMotion: true }, secrets).reduceMotion).toBe(true);
+    expect(normalizeConfig({ reduceMotion: 'yes' }, secrets).reduceMotion).toBe(false);
+  });
 });
 
 describe('isPayeeConfigured', () => {

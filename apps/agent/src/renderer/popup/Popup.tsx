@@ -1,6 +1,6 @@
 import { applyAmountKey, formatINR, formatTyping, parseAmount, toAmountInput } from '@counterpay/core';
 import type { DisplayReach, PopupOpenInfo } from '@shared/api';
-import { motion, useAnimationControls, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../shared/api';
@@ -39,9 +39,12 @@ const HIDDEN: View = {
 const SENT_HOLD_MS = 450;
 const FADE_MS = 120;
 
-function CheckIcon() {
+/** The pill's colour grows out of the ₹ circle until it fills the pill (a scaled circle: cheap to draw). */
+const FLOOD_SCALE = 20;
+
+function CheckIcon({ instant }: { instant: boolean }) {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden>
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
       <motion.path
         d="M5 12.5l4.2 4.2L19 7"
         fill="none"
@@ -49,9 +52,9 @@ function CheckIcon() {
         strokeWidth="2.6"
         strokeLinecap="round"
         strokeLinejoin="round"
-        initial={{ pathLength: 0 }}
+        initial={{ pathLength: instant ? 1 : 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        transition={{ duration: 0.22, delay: 0.06, ease: 'easeOut' }}
       />
     </svg>
   );
@@ -63,11 +66,16 @@ function CheckIcon() {
  */
 export function Popup() {
   const { t } = useTranslation();
-  const reduceMotion = useReducedMotion();
+  const systemReduce = useReducedMotion();
   const shake = useAnimationControls();
   const [view, setView] = useState<View>(HIDDEN);
   const viewRef = useRef(view);
   viewRef.current = view;
+  const reduceMotion = Boolean(systemReduce || view.info?.reduceMotion);
+
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-reduce-motion', view.info?.reduceMotion === true);
+  }, [view.info?.reduceMotion]);
 
   const update = useCallback((patch: Partial<View>) => {
     viewRef.current = { ...viewRef.current, ...patch };
@@ -105,7 +113,7 @@ export function Popup() {
           ? t('errors.max', { max: formatINR(parsed.maxPaise ?? v.info.maxRupees * 100) })
           : t(`errors.${parsed.error}`);
       update({ invalid: reason });
-      void shake.start({ x: [0, -6, 6, -4, 4, 0], transition: { duration: 0.18 } });
+      if (!reduceMotion) void shake.start({ x: [0, -6, 6, -4, 4, 0], transition: { duration: 0.18 } });
       return;
     }
 
@@ -120,7 +128,7 @@ export function Popup() {
       update({ phase: 'hidden', fading: true });
       setTimeout(() => api.popup.done(), FADE_MS + 10);
     }, SENT_HOLD_MS);
-  }, [shake, t, update]);
+  }, [reduceMotion, shake, t, update]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -167,7 +175,8 @@ export function Popup() {
     caption = invalid;
     tone = 'bad';
   } else if (phase === 'sent') {
-    caption = t(reach === 'online' ? 'popup.onDisplay' : reach === 'offline' ? 'popup.displayOffline' : 'popup.onSimulator');
+    const where = t(reach === 'online' ? 'popup.onDisplay' : reach === 'offline' ? 'popup.displayOffline' : 'popup.onSimulator');
+    caption = `${formatTyping(raw)} · ${where}`;
     tone = reach === 'offline' ? 'bad' : 'good';
   } else if (info && !info.payeeReady) {
     caption = t('popup.noPayee');
@@ -186,7 +195,7 @@ export function Popup() {
     <div className={styles.stage}>
       <motion.div
         key={view.opened}
-        className={styles.pill}
+        className={`${styles.pill} ${phase === 'sent' ? styles.done : ''}`}
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
         animate={
           visible
@@ -196,20 +205,43 @@ export function Popup() {
         role="dialog"
         aria-label={t('popup.placeholder')}
       >
+        {phase === 'sent' && (
+          <motion.div
+            className={styles.flood}
+            aria-hidden
+            initial={reduceMotion ? { opacity: 0, scale: FLOOD_SCALE } : { scale: 1 }}
+            animate={{ opacity: 1, scale: FLOOD_SCALE }}
+            transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: [0.4, 0, 0.2, 1] }}
+          />
+        )}
         <motion.div className={styles.row} animate={shake}>
           <div className={styles.glyph} aria-hidden>
-            ₹
+            <AnimatePresence initial={false}>
+              {phase === 'sent' ? (
+                <motion.span key="tick" className={styles.glyphFace}>
+                  <CheckIcon instant={reduceMotion} />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="rupee"
+                  className={styles.glyphFace}
+                  exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: 0.4, transition: { duration: 0.12 } }}
+                >
+                  ₹
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
           <div className={styles.middle}>
             {phase === 'sent' ? (
               <motion.div
                 className={styles.sent}
-                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.16 }}
+                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.16, delay: reduceMotion ? 0 : 0.08, ease: 'easeOut' }}
+                aria-live="polite"
               >
-                <CheckIcon />
-                <span className={styles.sentAmount}>{formatTyping(raw)}</span>
+                {t('popup.sent')}
               </motion.div>
             ) : (
               <div className={`${styles.amount} ${phase === 'sending' ? styles.sending : ''}`} aria-live="polite">

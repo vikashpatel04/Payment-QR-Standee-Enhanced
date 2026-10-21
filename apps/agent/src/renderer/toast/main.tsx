@@ -16,8 +16,9 @@ api.toast.onShow((message) => {
 
 /** Shown for 0.9 s without ever taking focus. */
 function Toast() {
-  const reduceMotion = useReducedMotion();
+  const systemReduce = useReducedMotion();
   const [message, setMessage] = useState<(ToastMessage & { id: number }) | null>(null);
+  const reduceMotion = Boolean(systemReduce || message?.reduceMotion);
 
   useEffect(() => {
     let id = 0;
@@ -25,6 +26,7 @@ function Toast() {
     deliver = (next) => {
       clearTimeout(timer);
       const mine = ++id;
+      document.documentElement.toggleAttribute('data-reduce-motion', next.reduceMotion === true);
       setMessage({ ...next, id: mine });
       timer = setTimeout(() => setMessage((current) => (current?.id === mine ? null : current)), 900);
     };

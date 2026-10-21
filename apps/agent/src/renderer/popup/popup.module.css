@@ -15,6 +15,8 @@
 }
 
 .pill {
+  position: relative;
+  overflow: hidden;
   width: 360px;
   height: 88px;
   border-radius: 20px;
@@ -27,7 +29,20 @@
   color: #f2f5f3;
 }
 
+/* Sits on the ₹ circle (16 px padding + half of 34 px, centred vertically) and is scaled up to fill the pill. */
+.flood {
+  position: absolute;
+  left: 16px;
+  top: 26px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  will-change: transform;
+}
+
 .row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -46,6 +61,35 @@
   color: var(--accent);
   font-size: 18px;
   font-weight: 600;
+  transition:
+    background 200ms ease,
+    color 200ms ease;
+}
+
+.glyphFace {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+}
+
+/* Once sent, everything on the coloured pill is white. */
+.done .glyph {
+  background: rgb(255 255 255 / 20%);
+  color: #fff;
+}
+
+.done .captionGood,
+.done .captionBad {
+  color: rgb(255 255 255 / 88%);
+}
+
+.done .enter {
+  color: rgb(255 255 255 / 60%);
+}
+
+.done .dotOk {
+  background: #fff;
+  box-shadow: none;
 }
 
 .middle {
@@ -100,20 +144,18 @@
   }
 }
 
+/* "Sent" in the same size as the amount. */
 .sent {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   height: 38px;
-  color: var(--accent);
-}
-
-.sentAmount {
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 32px;
+  line-height: 38px;
   font-weight: 600;
-  color: #f2f5f3;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: #fff;
 }
 
 .caption {

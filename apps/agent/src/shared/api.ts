@@ -25,6 +25,7 @@ export interface PopupOpenInfo {
   maxRupees: number;
   reach: DisplayReach;
   payeeReady: boolean;
+  reduceMotion: boolean;
 }
 
 export type SubmitResult = { ok: true; reach: DisplayReach } | { ok: false; error: 'noPayee' | 'invalid' | 'failed' };
@@ -32,6 +33,7 @@ export type SubmitResult = { ok: true; reach: DisplayReach } | { ok: false; erro
 export interface ToastMessage {
   text: string;
   tone: 'info' | 'warn';
+  reduceMotion?: boolean;
 }
 
 export interface ShortcutState {
