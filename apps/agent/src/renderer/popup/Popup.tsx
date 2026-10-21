@@ -36,8 +36,9 @@ const HIDDEN: View = {
   fading: false,
 };
 
-const SENT_HOLD_MS = 450;
-const FADE_MS = 120;
+const SENT_HOLD_MS = 300;
+/** The pill sliding down and out after "Sent". */
+const FADE_MS = 150;
 
 /** The pill's colour grows out of the ₹ circle until it fills the pill (a scaled circle: cheap to draw). */
 const FLOOD_SCALE = 20;
@@ -54,7 +55,7 @@ function CheckIcon({ instant }: { instant: boolean }) {
         strokeLinejoin="round"
         initial={{ pathLength: instant ? 1 : 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.22, delay: 0.06, ease: 'easeOut' }}
+        transition={{ duration: 0.18, delay: 0.04, ease: 'easeOut' }}
       />
     </svg>
   );
@@ -203,7 +204,9 @@ export function Popup() {
         animate={
           visible
             ? { opacity: 1, y: 0, transition: { duration: reduceMotion ? 0.1 : 0.14, ease: 'easeOut' } }
-            : { opacity: 0, transition: { duration: view.fading ? FADE_MS / 1000 : 0 } }
+            : view.fading && !reduceMotion
+              ? { opacity: 0, y: 16, transition: { duration: FADE_MS / 1000, ease: [0.4, 0, 1, 1] } }
+              : { opacity: 0, transition: { duration: view.fading ? FADE_MS / 1000 : 0 } }
         }
         role="dialog"
         aria-label={t('popup.placeholder')}
@@ -214,7 +217,7 @@ export function Popup() {
             aria-hidden
             initial={reduceMotion ? { opacity: 0, scale: FLOOD_SCALE } : { scale: 1 }}
             animate={{ opacity: 1, scale: FLOOD_SCALE }}
-            transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: reduceMotion ? 0.1 : 0.22, ease: [0.4, 0, 0.2, 1] }}
           />
         )}
         <motion.div className={styles.row} animate={shake}>
@@ -241,7 +244,7 @@ export function Popup() {
                 className={styles.sent}
                 initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.16, delay: reduceMotion ? 0 : 0.08, ease: 'easeOut' }}
+                transition={{ duration: 0.12, delay: reduceMotion ? 0 : 0.05, ease: 'easeOut' }}
                 aria-live="polite"
               >
                 {t('popup.sent')}

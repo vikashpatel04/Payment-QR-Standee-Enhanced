@@ -106,8 +106,9 @@ export class PopupWindow {
   sent(): void {
     if (this.phase !== 'open') return;
     this.phase = 'sent';
+    // No win.blur() here: on Windows it hands focus to the next window below this always-on-top
+    // pill (often the taskbar), undoing the restore. Giving focus back already deactivates it.
     if (!this.platform.restoreForeground(this.previous)) console.warn('[popup] Windows refused to give focus back after Enter');
-    this.win.blur();
     // Only if the displays never answer at all.
     this.hideTimer = setTimeout(() => this.done(), 20_000);
   }
