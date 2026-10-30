@@ -4,6 +4,10 @@ Show the customer an exact-amount UPI QR with one shortcut, a few digits and Ent
 
 Customers who scan an open standee QR type the amount themselves, and short payments slip through. Counter Pay puts a QR with the amount already set on a customer-facing screen, built from your own merchant standee QR so the money always goes to the same account.
 
+[![Watch the 75-second video: how Counter Pay works](docs/media/counter-pay-poster.png)](https://github.com/user-attachments/assets/56edf1cb-2e22-44d4-9ac1-1a9ec37883ad)
+
+▶ **[Watch the video](https://github.com/user-attachments/assets/56edf1cb-2e22-44d4-9ac1-1a9ec37883ad)** (75 seconds, with sound): the problem, the three keys at the counter, what the customer sees, and the displays you can use.
+
 > **Status:** Phase 1 (desktop app MVP) is in progress. Windows 10 and 11, x64.
 
 ## Install
