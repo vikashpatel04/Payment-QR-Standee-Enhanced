@@ -9,7 +9,7 @@ export function displayPageDir(): string {
   return app.isPackaged ? join(process.resourcesPath, 'display') : join(app.getAppPath(), '..', 'display', 'dist');
 }
 
-export function rendererUrl(page: 'popup' | 'toast' | 'app'): { url: string } | { file: string } {
+export function rendererUrl(page: 'popup' | 'toast' | 'island' | 'app'): { url: string } | { file: string } {
   const devServer = process.env.ELECTRON_RENDERER_URL;
   if (!app.isPackaged && devServer) return { url: `${devServer}/${page}/index.html` };
   return { file: join(__dirname, '../renderer', page, 'index.html') };

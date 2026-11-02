@@ -17,6 +17,12 @@ const api: CounterPayApi = {
   toast: {
     onShow: (callback) => subscribe(IPC.toastShow, callback),
   },
+  island: {
+    onState: (callback) => subscribe(IPC.islandState, callback),
+    hover: (over) => ipcRenderer.send(IPC.islandHover, over),
+    dismiss: (seq) => ipcRenderer.send(IPC.islandDismiss, seq),
+    gone: (seq) => ipcRenderer.send(IPC.islandGone, seq),
+  },
   app: {
     snapshot: () => ipcRenderer.invoke(IPC.snapshot),
     onSnapshot: (callback) => subscribe(IPC.snapshotPush, callback),

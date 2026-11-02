@@ -210,6 +210,9 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
         <Setting name={t('app.settings.reduceMotion')} hint={t('app.settings.reduceMotionHint')}>
           <Toggle on={config.reduceMotion} label={t('app.settings.reduceMotion')} onChange={(reduceMotion) => updateConfig({ reduceMotion })} />
         </Setting>
+        <Setting name={t('app.settings.infoIsland')} hint={t('app.settings.infoIslandHint')}>
+          <Toggle on={config.infoIsland} label={t('app.settings.infoIsland')} onChange={(infoIsland) => updateConfig({ infoIsland })} />
+        </Setting>
         <Setting name={t('app.settings.retention')}>
           <select
             className={ui.select}

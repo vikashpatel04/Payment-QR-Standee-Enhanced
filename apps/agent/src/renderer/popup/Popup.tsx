@@ -21,6 +21,8 @@ interface View {
   opened: number;
   /** Fade out after a send; vanish at once on Esc. */
   fading: boolean;
+  /** With the Info Island on: the pill drops off the bottom of the screen right after Enter. */
+  dropping: boolean;
 }
 
 const HIDDEN: View = {
@@ -34,9 +36,12 @@ const HIDDEN: View = {
   info: null,
   opened: 0,
   fading: false,
+  dropping: false,
 };
 
 const SENT_HOLD_MS = 300;
+/** The pill falling away when the Info Island takes over. */
+const DROP_MS = 260;
 /** The pill sliding down and out after "Sent". */
 const FADE_MS = 150;
 
@@ -98,6 +103,7 @@ export function Popup() {
           info,
           opened: viewRef.current.opened + 1,
           fading: false,
+          dropping: false,
         });
         window.focus();
       }),
@@ -125,6 +131,11 @@ export function Popup() {
     if (viewRef.current.opened !== opened) return;
     if (!result.ok) {
       update({ phase: 'error', error: t(result.error === 'noPayee' ? 'popup.noPayee' : 'popup.failed') });
+      return;
+    }
+    if (v.info.infoIsland) {
+      update({ phase: 'hidden', fading: true, dropping: true, reach: result.reach });
+      setTimeout(() => api.popup.done(), DROP_MS + 10);
       return;
     }
     update({ phase: 'sent', reach: result.reach });
@@ -204,7 +215,9 @@ export function Popup() {
         animate={
           visible
             ? { opacity: 1, y: 0, transition: { duration: reduceMotion ? 0.1 : 0.14, ease: 'easeOut' } }
-            : view.fading && !reduceMotion
+            : view.dropping && !reduceMotion
+              ? { opacity: 0.6, y: 150, transition: { duration: DROP_MS / 1000, ease: [0.5, 0, 0.9, 0.55] } }
+              : view.fading && !reduceMotion
               ? { opacity: 0, y: 16, transition: { duration: FADE_MS / 1000, ease: [0.4, 0, 1, 1] } }
               : { opacity: 0, transition: { duration: view.fading ? FADE_MS / 1000 : 0 } }
         }

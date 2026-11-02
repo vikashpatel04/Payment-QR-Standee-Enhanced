@@ -7,12 +7,14 @@ import {
   type DisplayConfig,
   frameProfiles,
   type DisplayContent,
+  type EndReason,
   historyToCsv,
   isPairingCode,
   isPayeeConfigured,
   isQuietMoment,
   localDay,
   type PayeeInfo,
+  type PayScene,
   type PaySource,
   PROFILE_PRESETS,
   readPayee,
@@ -30,9 +32,11 @@ import { extname, join } from 'node:path';
 import {
   type AppSnapshot,
   type ConfigPatch,
+  type DisplayReach,
   type HistoryFilter,
   type HistoryPage,
   IPC,
+  type IslandState,
   type PayeeImportResult,
   type PopupOpenInfo,
   type SceneView,
@@ -56,7 +60,7 @@ import { Shortcuts } from './shortcuts';
 import { StateStore } from './state-store';
 import { AppTray } from './tray';
 import { Updater } from './updater';
-import { MainWindow, PopupWindow, SimulatorWindow, ToastWindow } from './windows';
+import { InfoIslandWindow, MainWindow, PopupWindow, SimulatorWindow, ToastWindow } from './windows';
 
 type StartResult = { ok: false; error: 'noPayee' | 'invalid' | 'failed' } | { ok: true; outcome: Promise<ShowOutcome> };
 
@@ -106,6 +110,9 @@ export class Agent {
   private readonly simulator: SimulatorWindow;
   private popup: PopupWindow | null = null;
   private toast: ToastWindow | null = null;
+  /** Exists only while Settings › Info Island is on. */
+  private island: InfoIslandWindow | null = null;
+  private islandWarm: NodeJS.Timeout | null = null;
   private tray: AppTray | null = null;
   private showing: Promise<ShowOutcome> = Promise.resolve({ acked: [], reach: 'simulatorOnly' });
   private serverError: AppSnapshot['serverError'] = null;
@@ -188,6 +195,7 @@ export class Agent {
 
     this.machine.on('scene', (scene) => {
       this.showing = this.displays.show(scene);
+      if (scene.kind === 'pay') this.islandPay(scene, this.showing);
       this.pushSnapshot();
     });
     this.machine.on('payStarted', ({ scene, source }) => {
@@ -203,6 +211,7 @@ export class Agent {
     });
     this.machine.on('payEnded', ({ scene, reason, endedAt }) => {
       this.safely('history end', () => this.history.end(scene.ref, reason, endedAt));
+      this.islandEnded(reason);
       this.pushSnapshot();
     });
     this.displays.onChange(() => this.pushSnapshot());
@@ -224,6 +233,7 @@ export class Agent {
 
     this.popup = new PopupWindow(this.platform);
     this.toast = new ToastWindow();
+    this.applyIsland(config);
     this.tray = new AppTray({
       open: () => this.main.show(),
       showAmount: () => this.summon(),
@@ -260,6 +270,7 @@ export class Agent {
     if (this.snapshotTimer) clearTimeout(this.snapshotTimer);
     this.snapshotTimer = null;
     this.safely('updater stop', () => this.updater.stop());
+    this.safely('info island close', () => this.applyIsland(null));
     this.safely('shortcuts stop', () => this.shortcuts.dispose());
     this.safely('scene stop', () => this.machine.dispose());
     await this.displays.dispose().catch((error) => console.error('[agent] displays stop failed', error));
@@ -270,6 +281,53 @@ export class Agent {
     );
     this.safely('tray remove', () => this.tray?.dispose());
     this.safely('history close', () => this.history.close());
+  }
+
+  // ---------- Info Island ----------
+
+  /** Creates the island's window when the setting is on (warmed up a little later, off the busy path), or closes it. */
+  private applyIsland(config: CounterPayConfig | null): void {
+    if (this.islandWarm) clearTimeout(this.islandWarm);
+    this.islandWarm = null;
+    if (config?.infoIsland) {
+      if (this.island) return;
+      const island = new InfoIslandWindow();
+      this.island = island;
+      this.islandWarm = setTimeout(() => island.warm(), 2_000);
+      return;
+    }
+    this.island?.dispose();
+    this.island = null;
+  }
+
+  /** The island follows a new QR, then marks it confirmed once the displays have drawn it. */
+  private islandPay(scene: PayScene, showing: Promise<ShowOutcome>): void {
+    const island = this.island;
+    if (!island) return;
+    const state = (reach: DisplayReach, confirmed: boolean): IslandState => ({
+      kind: 'pay',
+      id: scene.id,
+      amountPaise: scene.amountPaise,
+      totalMs: scene.expiresAt - scene.shownAt,
+      leftMs: Math.max(0, scene.expiresAt - Date.now()),
+      reach,
+      confirmed,
+      reduceMotion: this.config.get().reduceMotion,
+    });
+    // After the displays have their frame: the island never sits in front of showing the QR.
+    setImmediate(() => void island.show(state(this.displays.reach(), false)));
+    void showing.then((outcome) => {
+      if (this.island === island && this.machine.pay?.id === scene.id) void island.show(state(outcome.reach, true));
+    });
+  }
+
+  private islandEnded(reason: EndReason): void {
+    const island = this.island;
+    if (!island || reason === 'replaced') return;
+    const reduceMotion = this.config.get().reduceMotion;
+    if (reason === 'cleared' || reason === 'bill-saved') void island.show({ kind: 'message', message: 'cleared', reduceMotion });
+    else if (reason === 'expired') void island.show({ kind: 'message', message: 'timedOut', reduceMotion });
+    else void island.show({ kind: 'hide' });
   }
 
   // ---------- Showing and clearing ----------
@@ -308,6 +366,7 @@ export class Agent {
       reach: this.displays.reach(),
       payeeReady: isPayeeConfigured(config),
       reduceMotion: config.reduceMotion,
+      infoIsland: this.island !== null,
     };
     this.popup.open(info);
   }
@@ -318,6 +377,8 @@ export class Agent {
 
   private clearFromShortcut(): void {
     const cleared = this.clear();
+    // With the Info Island on, "QR cleared" shows there instead.
+    if (cleared && this.island) return;
     this.toast?.show({ reduceMotion: this.config.get().reduceMotion, text: t(cleared ? 'toast.cleared' : 'toast.nothingToClear'), tone: 'info' });
   }
 
@@ -374,6 +435,7 @@ export class Agent {
     this.displays.setContent(this.content());
     void this.displays.sync(config.displays).then(() => this.updateLan());
     if (config.startAtLogin !== previous.startAtLogin) this.applyLoginItem(config);
+    if (config.infoIsland !== previous.infoIsland) this.applyIsland(config);
     this.tray?.refresh();
     this.pushSnapshot();
   }
@@ -701,11 +763,19 @@ export class Agent {
       const started = this.startShow(Number(amountPaise), 'popup');
       if (!started.ok) return started;
       this.popup?.sent();
+      if (this.island) {
+        // The pill drops away at once; the Info Island tells when a display has the QR.
+        this.popup?.confirmed();
+        return { ok: true, reach: this.displays.reach() } satisfies SubmitResult;
+      }
       const { reach } = await started.outcome;
       this.popup?.confirmed();
       return { ok: true, reach } satisfies SubmitResult;
     });
     on(IPC.popupCancel, () => this.popup?.cancel());
+    on(IPC.islandHover, (over: boolean) => this.island?.hover(over === true));
+    on(IPC.islandDismiss, (seq: number) => this.island?.dismiss(Number(seq)));
+    on(IPC.islandGone, (seq: number) => this.island?.gone(Number(seq)));
     on(IPC.popupDone, () => this.popup?.done());
 
     handle(IPC.snapshot, () => this.snapshot());

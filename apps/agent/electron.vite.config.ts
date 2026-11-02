@@ -33,6 +33,7 @@ export default defineConfig({
         input: {
           popup: resolve(__dirname, 'src/renderer/popup/index.html'),
           toast: resolve(__dirname, 'src/renderer/toast/index.html'),
+          island: resolve(__dirname, 'src/renderer/island/index.html'),
           app: resolve(__dirname, 'src/renderer/app/index.html'),
         },
       },

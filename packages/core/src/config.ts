@@ -51,6 +51,8 @@ export interface CounterPayConfig {
   startAtLogin: boolean;
   /** Plain fades instead of movement in the popup, toast and window, for slow PCs or by preference. */
   reduceMotion: boolean;
+  /** After Enter the pill drops away and a small island at the top of the screen shows the amount and time left. */
+  infoIsland: boolean;
 }
 
 export interface ConfigSecrets {
@@ -90,6 +92,7 @@ export function defaultConfig(secrets: ConfigSecrets): CounterPayConfig {
     server: { localPort: DEFAULT_LOCAL_PORT, lanPort: DEFAULT_LAN_PORT },
     startAtLogin: true,
     reduceMotion: false,
+    infoIsland: false,
   };
 }
 
@@ -240,6 +243,7 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
     server: { localPort, lanPort: lanPort === localPort ? (localPort === 65535 ? 65534 : localPort + 1) : lanPort },
     startAtLogin: bool(r.startAtLogin, d.startAtLogin),
     reduceMotion: bool(r.reduceMotion, d.reduceMotion),
+    infoIsland: bool(r.infoIsland, d.infoIsland),
   };
 }
 

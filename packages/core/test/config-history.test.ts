@@ -72,6 +72,12 @@ describe('normalizeConfig', () => {
     expect(normalizeConfig({ reduceMotion: true }, secrets).reduceMotion).toBe(true);
     expect(normalizeConfig({ reduceMotion: 'yes' }, secrets).reduceMotion).toBe(false);
   });
+
+  it('keeps the Info Island off unless the shop turns it on', () => {
+    expect(normalizeConfig({}, secrets).infoIsland).toBe(false);
+    expect(normalizeConfig({ infoIsland: true }, secrets).infoIsland).toBe(true);
+    expect(normalizeConfig({ infoIsland: 1 }, secrets).infoIsland).toBe(false);
+  });
 });
 
 describe('isPayeeConfigured', () => {

@@ -26,6 +26,31 @@ export interface PopupOpenInfo {
   reach: DisplayReach;
   payeeReady: boolean;
   reduceMotion: boolean;
+  /** After Enter the pill drops away at once: the Info Island takes over. */
+  infoIsland: boolean;
+}
+
+/** What the Info Island shows. `seq` numbers every message, so a late "gone" never hides a newer one. */
+export type IslandState =
+  | {
+      kind: 'pay';
+      /** The QR's scene id. */
+      id: number;
+      amountPaise: number;
+      /** The QR's whole life, and how much of it is left, in ms. */
+      totalMs: number;
+      leftMs: number;
+      reach: DisplayReach;
+      /** A display (or the simulator) has drawn it. */
+      confirmed: boolean;
+      reduceMotion: boolean;
+    }
+  | { kind: 'message'; message: 'cleared' | 'timedOut'; reduceMotion: boolean }
+  | { kind: 'hide' };
+
+export interface IslandMessage {
+  seq: number;
+  state: IslandState;
 }
 
 export type SubmitResult = { ok: true; reach: DisplayReach } | { ok: false; error: 'noPayee' | 'invalid' | 'failed' };
@@ -148,6 +173,15 @@ export interface CounterPayApi {
   toast: {
     onShow(callback: (message: ToastMessage) => void): Unsubscribe;
   };
+  island: {
+    onState(callback: (message: IslandMessage) => void): Unsubscribe;
+    /** The mouse is over the island: let it take clicks (its × ), else clicks pass through. */
+    hover(over: boolean): void;
+    /** The ×: hide until the next QR. The QR itself stays on the display. */
+    dismiss(seq: number): void;
+    /** The island has tucked itself away after message `seq`. */
+    gone(seq: number): void;
+  };
   app: {
     snapshot(): Promise<AppSnapshot>;
     onSnapshot(callback: (snapshot: AppSnapshot) => void): Unsubscribe;
@@ -226,6 +260,10 @@ export const IPC = {
   popupCancel: 'popup:cancel',
   popupDone: 'popup:done',
   toastShow: 'toast:show',
+  islandState: 'island:state',
+  islandHover: 'island:hover',
+  islandDismiss: 'island:dismiss',
+  islandGone: 'island:gone',
   snapshot: 'app:snapshot',
   snapshotPush: 'app:snapshot-push',
   updateConfig: 'app:update-config',

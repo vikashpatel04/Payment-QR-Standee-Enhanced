@@ -1,5 +1,5 @@
 import { BrowserWindow, nativeTheme, screen, shell } from 'electron';
-import { IPC, type PopupOpenInfo, type ToastMessage } from '../shared/api';
+import { IPC, type IslandState, type PopupOpenInfo, type ToastMessage } from '../shared/api';
 import { iconPath, preloadPath, rendererUrl } from './paths';
 import type { Platform } from './platform';
 
@@ -7,10 +7,12 @@ import type { Platform } from './platform';
 const PILL = { w: 360, h: 88 };
 const POPUP = { w: 400, h: 136, top: 28 };
 const TOAST = { w: 280, h: 72 };
+/** Room for the widest island (hovered, with its ×), its curved shoulders and its shadow. */
+const ISLAND = { w: 480, h: 110 };
 /** Gap between the bottom of the pill and the taskbar. */
 const ABOVE_TASKBAR = 96;
 
-function load(win: BrowserWindow, page: 'popup' | 'toast' | 'app'): void {
+function load(win: BrowserWindow, page: 'popup' | 'toast' | 'island' | 'app'): void {
   const target = rendererUrl(page);
   if ('url' in target) void win.loadURL(target.url);
   else void win.loadFile(target.file);
@@ -208,6 +210,105 @@ export class ToastWindow {
     lockDown(win);
     this.ready = new Promise((resolve) => win.webContents.once('did-finish-load', () => resolve()));
     load(win, 'toast');
+    this.win = win;
+    return win;
+  }
+}
+
+/** Top-centre of the whole screen the cursor is on: the island hangs from the bezel. */
+function topCentre(width: number, height: number) {
+  const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).bounds;
+  return { x: Math.round(area.x + (area.width - width) / 2), y: area.y, width, height };
+}
+
+/**
+ * The Info Island: a small black island at the top of the screen with the QR's amount and the
+ * time it has left. Exists only while the setting is on. Never focusable and shown inactive; its
+ * transparent area lets clicks through, and only the island itself takes the mouse while hovered.
+ */
+export class InfoIslandWindow {
+  private win: BrowserWindow | null = null;
+  private ready: Promise<void> | null = null;
+  private seq = 0;
+  /** The QR the cashier hid with the ×: it stays hidden until the next one. */
+  private dismissedId: number | null = null;
+  private currentPayId: number | null = null;
+
+  /** Creates the window ahead of time, so the first QR doesn't wait for it. */
+  warm(): void {
+    this.ensure();
+  }
+
+  async show(state: IslandState): Promise<void> {
+    if (state.kind === 'pay') {
+      this.currentPayId = state.id;
+      if (state.id === this.dismissedId) return;
+    } else if (state.kind === 'hide' && !this.win?.isVisible()) {
+      return;
+    }
+    const win = this.ensure();
+    const seq = ++this.seq;
+    await this.ready;
+    if (win.isDestroyed() || seq !== this.seq) return;
+    if (!win.isVisible()) {
+      win.setBounds(topCentre(ISLAND.w, ISLAND.h));
+      win.setIgnoreMouseEvents(true, { forward: true });
+    }
+    win.webContents.send(IPC.islandState, { seq, state });
+    if (state.kind !== 'hide') win.showInactive();
+  }
+
+  hover(over: boolean): void {
+    const win = this.win;
+    if (!win || win.isDestroyed()) return;
+    if (over) win.setIgnoreMouseEvents(false);
+    else win.setIgnoreMouseEvents(true, { forward: true });
+  }
+
+  /** The × was clicked on message `seq`: the island tucks itself away and reports `gone`. */
+  dismiss(seq: number): void {
+    if (seq === this.seq) this.dismissedId = this.currentPayId;
+  }
+
+  gone(seq: number): void {
+    const win = this.win;
+    if (!win || win.isDestroyed() || seq !== this.seq) return;
+    win.hide();
+    win.setIgnoreMouseEvents(true, { forward: true });
+  }
+
+  dispose(): void {
+    const win = this.win;
+    this.win = null;
+    this.ready = null;
+    if (win && !win.isDestroyed()) win.destroy();
+  }
+
+  private ensure(): BrowserWindow {
+    if (this.win && !this.win.isDestroyed()) return this.win;
+    const win = new BrowserWindow({
+      width: ISLAND.w,
+      height: ISLAND.h,
+      show: false,
+      frame: false,
+      transparent: true,
+      backgroundColor: '#00000000',
+      focusable: false,
+      resizable: false,
+      movable: false,
+      minimizable: false,
+      maximizable: false,
+      skipTaskbar: true,
+      hasShadow: false,
+      alwaysOnTop: true,
+      webPreferences: { preload: preloadPath(), sandbox: true, contextIsolation: true, backgroundThrottling: false },
+    });
+    win.setAlwaysOnTop(true, 'screen-saver');
+    win.setIgnoreMouseEvents(true, { forward: true });
+    win.setMenu(null);
+    lockDown(win);
+    this.ready = new Promise((resolve) => win.webContents.once('did-finish-load', () => resolve()));
+    load(win, 'island');
     this.win = win;
     return win;
   }
