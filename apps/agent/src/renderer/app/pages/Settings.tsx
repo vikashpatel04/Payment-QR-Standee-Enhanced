@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../shared/api';
+import { IslandSettings } from '../components/IslandSettings';
 import { PayeeImport } from '../components/PayeeImport';
 import { ShortcutRecorder } from '../components/ShortcutRecorder';
 import { Toggle } from '../components/Toggle';
@@ -210,9 +211,6 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
         <Setting name={t('app.settings.reduceMotion')} hint={t('app.settings.reduceMotionHint')}>
           <Toggle on={config.reduceMotion} label={t('app.settings.reduceMotion')} onChange={(reduceMotion) => updateConfig({ reduceMotion })} />
         </Setting>
-        <Setting name={t('app.settings.infoIsland')} hint={t('app.settings.infoIslandHint')}>
-          <Toggle on={config.infoIsland} label={t('app.settings.infoIsland')} onChange={(infoIsland) => updateConfig({ infoIsland })} />
-        </Setting>
         <Setting name={t('app.settings.retention')}>
           <select
             className={ui.select}
@@ -227,6 +225,8 @@ export function Settings({ snapshot }: { snapshot: AppSnapshot }) {
           </select>
         </Setting>
       </section>
+
+      <IslandSettings config={config} />
 
       <UpdatesCard snapshot={snapshot} />
 

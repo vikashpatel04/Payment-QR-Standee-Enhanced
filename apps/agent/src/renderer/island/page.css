@@ -1,0 +1,17 @@
+/* The island's own window: transparent, wider than the island, and only the island takes the mouse. */
+html,
+body {
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  pointer-events: none;
+}

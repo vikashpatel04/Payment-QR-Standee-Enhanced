@@ -29,6 +29,7 @@ const api: CounterPayApi = {
     updateConfig: (patch) => ipcRenderer.invoke(IPC.updateConfig, patch),
     showAmount: (amountPaise) => ipcRenderer.invoke(IPC.showAmount, amountPaise),
     clear: () => ipcRenderer.invoke(IPC.clear),
+    previewIsland: () => ipcRenderer.invoke(IPC.islandPreview),
     testPattern: (displayId) => ipcRenderer.send(IPC.testPattern, displayId),
     openSimulator: () => ipcRenderer.send(IPC.openSimulator),
     regeneratePairingCode: (displayId) => ipcRenderer.invoke(IPC.regeneratePairing, displayId),

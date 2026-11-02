@@ -53,7 +53,11 @@ export interface CounterPayConfig {
   reduceMotion: boolean;
   /** After Enter the pill drops away and a small island at the top of the screen shows the amount and time left. */
   infoIsland: boolean;
+  /** How the Info Island looks: `size` in % (60–140), `roundness` of its lower corners in % (0–100). */
+  island: { size: number; roundness: number; speed: IslandSpeed };
 }
+
+export type IslandSpeed = 'fast' | 'medium' | 'slow';
 
 export interface ConfigSecrets {
   /** A random bearer token for the local API. */
@@ -93,6 +97,7 @@ export function defaultConfig(secrets: ConfigSecrets): CounterPayConfig {
     startAtLogin: true,
     reduceMotion: false,
     infoIsland: false,
+    island: { size: 85, roundness: 100, speed: 'medium' },
   };
 }
 
@@ -183,6 +188,7 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
   const brand = isObject(r.brand) ? r.brand : {};
   const language = isObject(r.language) ? r.language : {};
   const history = isObject(r.history) ? r.history : {};
+  const island = isObject(r.island) ? r.island : {};
   const api = isObject(r.api) ? r.api : {};
   const updates = isObject(r.updates) ? r.updates : {};
   const server = isObject(r.server) ? r.server : {};
@@ -244,6 +250,11 @@ export function normalizeConfig(raw: unknown, secrets: ConfigSecrets): CounterPa
     startAtLogin: bool(r.startAtLogin, d.startAtLogin),
     reduceMotion: bool(r.reduceMotion, d.reduceMotion),
     infoIsland: bool(r.infoIsland, d.infoIsland),
+    island: {
+      size: int(island.size, d.island.size, 60, 140),
+      roundness: int(island.roundness, d.island.roundness, 0, 100),
+      speed: island.speed === 'fast' || island.speed === 'slow' ? island.speed : 'medium',
+    },
   };
 }
 

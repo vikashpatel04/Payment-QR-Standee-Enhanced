@@ -78,6 +78,16 @@ describe('normalizeConfig', () => {
     expect(normalizeConfig({ infoIsland: true }, secrets).infoIsland).toBe(true);
     expect(normalizeConfig({ infoIsland: 1 }, secrets).infoIsland).toBe(false);
   });
+
+  it('keeps the Info Island look within its ranges', () => {
+    expect(normalizeConfig({}, secrets).island).toEqual({ size: 85, roundness: 100, speed: 'medium' });
+    expect(normalizeConfig({ island: { size: 300, roundness: -5, speed: 'slow' } }, secrets).island).toEqual({
+      size: 140,
+      roundness: 0,
+      speed: 'slow',
+    });
+    expect(normalizeConfig({ island: { size: 72.4, speed: 'warp' } }, secrets).island).toEqual({ size: 72, roundness: 100, speed: 'medium' });
+  });
 });
 
 describe('isPayeeConfigured', () => {

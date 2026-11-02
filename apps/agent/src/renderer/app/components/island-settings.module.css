@@ -1,0 +1,42 @@
+/* A slice of the top of a screen, with the island at its real size. */
+.preview {
+  position: relative;
+  height: 128px;
+  margin: 4px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--sunken);
+}
+
+.bezel {
+  height: 12px;
+  background: #0b0c0c;
+}
+
+.stage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider input {
+  width: 200px;
+  accent-color: var(--accent);
+}
+
+.value {
+  width: 44px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--quiet);
+}

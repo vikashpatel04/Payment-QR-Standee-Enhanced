@@ -36,6 +36,8 @@ import {
   type HistoryFilter,
   type HistoryPage,
   IPC,
+  type IslandLook,
+  type IslandPreviewResult,
   type IslandState,
   type PayeeImportResult,
   type PopupOpenInfo,
@@ -60,7 +62,7 @@ import { Shortcuts } from './shortcuts';
 import { StateStore } from './state-store';
 import { AppTray } from './tray';
 import { Updater } from './updater';
-import { InfoIslandWindow, MainWindow, PopupWindow, SimulatorWindow, ToastWindow } from './windows';
+import { InfoIslandWindow, ISLAND_PREVIEW_ID, MainWindow, PopupWindow, SimulatorWindow, ToastWindow } from './windows';
 
 type StartResult = { ok: false; error: 'noPayee' | 'invalid' | 'failed' } | { ok: true; outcome: Promise<ShowOutcome> };
 
@@ -300,6 +302,30 @@ export class Agent {
     this.island = null;
   }
 
+  private islandLook(): IslandLook {
+    const { island, reduceMotion } = this.config.get();
+    return { ...island, reduceMotion };
+  }
+
+  /** Settings › Show on screen: a sample QR on the island for a few seconds, so its size can be judged on this monitor. */
+  private previewIsland(): IslandPreviewResult {
+    const island = this.island;
+    if (!island) return 'off';
+    if (this.machine.pay) return 'busy';
+    island.preview({
+      kind: 'pay',
+      id: ISLAND_PREVIEW_ID,
+      amountPaise: 114000,
+      totalMs: 60_000,
+      leftMs: 16_000,
+      reach: 'online',
+      confirmed: true,
+      look: this.islandLook(),
+    });
+    setTimeout(() => island.endPreview(), 9_000);
+    return 'shown';
+  }
+
   /** The island follows a new QR, then marks it confirmed once the displays have drawn it. */
   private islandPay(scene: PayScene, showing: Promise<ShowOutcome>): void {
     const island = this.island;
@@ -312,7 +338,7 @@ export class Agent {
       leftMs: Math.max(0, scene.expiresAt - Date.now()),
       reach,
       confirmed,
-      reduceMotion: this.config.get().reduceMotion,
+      look: this.islandLook(),
     });
     // After the displays have their frame: the island never sits in front of showing the QR.
     setImmediate(() => void island.show(state(this.displays.reach(), false)));
@@ -324,9 +350,9 @@ export class Agent {
   private islandEnded(reason: EndReason): void {
     const island = this.island;
     if (!island || reason === 'replaced') return;
-    const reduceMotion = this.config.get().reduceMotion;
-    if (reason === 'cleared' || reason === 'bill-saved') void island.show({ kind: 'message', message: 'cleared', reduceMotion });
-    else if (reason === 'expired') void island.show({ kind: 'message', message: 'timedOut', reduceMotion });
+    const look = this.islandLook();
+    if (reason === 'cleared' || reason === 'bill-saved') void island.show({ kind: 'message', message: 'cleared', look });
+    else if (reason === 'expired') void island.show({ kind: 'message', message: 'timedOut', look });
     else void island.show({ kind: 'hide' });
   }
 
@@ -436,6 +462,9 @@ export class Agent {
     void this.displays.sync(config.displays).then(() => this.updateLan());
     if (config.startAtLogin !== previous.startAtLogin) this.applyLoginItem(config);
     if (config.infoIsland !== previous.infoIsland) this.applyIsland(config);
+    else if (JSON.stringify(config.island) !== JSON.stringify(previous.island) || config.reduceMotion !== previous.reduceMotion) {
+      void this.island?.setLook(this.islandLook());
+    }
     this.tray?.refresh();
     this.pushSnapshot();
   }
@@ -773,6 +802,7 @@ export class Agent {
       return { ok: true, reach } satisfies SubmitResult;
     });
     on(IPC.popupCancel, () => this.popup?.cancel());
+    handle(IPC.islandPreview, () => this.previewIsland());
     on(IPC.islandHover, (over: boolean) => this.island?.hover(over === true));
     on(IPC.islandDismiss, (seq: number) => this.island?.dismiss(Number(seq)));
     on(IPC.islandGone, (seq: number) => this.island?.gone(Number(seq)));

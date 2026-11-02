@@ -1,5 +1,5 @@
 import { BrowserWindow, nativeTheme, screen, shell } from 'electron';
-import { IPC, type IslandState, type PopupOpenInfo, type ToastMessage } from '../shared/api';
+import { IPC, type IslandLook, type IslandState, type PopupOpenInfo, type ToastMessage } from '../shared/api';
 import { iconPath, preloadPath, rendererUrl } from './paths';
 import type { Platform } from './platform';
 
@@ -7,8 +7,10 @@ import type { Platform } from './platform';
 const PILL = { w: 360, h: 88 };
 const POPUP = { w: 400, h: 136, top: 28 };
 const TOAST = { w: 280, h: 72 };
-/** Room for the widest island (hovered, with its ×), its curved shoulders and its shadow. */
-const ISLAND = { w: 480, h: 110 };
+/** Room for the widest island at the largest size (hovered, with its ×), its shoulders and its shadow. */
+const ISLAND = { w: 600, h: 140 };
+/** The sample QR that Settings › Show on screen puts on the island. */
+export const ISLAND_PREVIEW_ID = -1;
 /** Gap between the bottom of the pill and the taskbar. */
 const ABOVE_TASKBAR = 96;
 
@@ -239,7 +241,27 @@ export class InfoIslandWindow {
     this.ensure();
   }
 
+  /** Settings changed: the island redraws (or will, next time it shows). */
+  async setLook(look: IslandLook): Promise<void> {
+    const win = this.win;
+    if (!win || win.isDestroyed()) return;
+    await this.ready;
+    if (!win.isDestroyed()) win.webContents.send(IPC.islandState, { seq: this.seq, state: { kind: 'look', look } });
+  }
+
+  /** The sample island from Settings; a × on an earlier sample doesn't block it. */
+  preview(state: IslandState): void {
+    if (this.dismissedId === ISLAND_PREVIEW_ID) this.dismissedId = null;
+    void this.show(state);
+  }
+
+  /** Ends the sample, unless a real QR has taken the island meanwhile. */
+  endPreview(): void {
+    if (this.currentPayId === ISLAND_PREVIEW_ID) void this.show({ kind: 'hide' });
+  }
+
   async show(state: IslandState): Promise<void> {
+    if (state.kind === 'look') return;
     if (state.kind === 'pay') {
       this.currentPayId = state.id;
       if (state.id === this.dismissedId) return;

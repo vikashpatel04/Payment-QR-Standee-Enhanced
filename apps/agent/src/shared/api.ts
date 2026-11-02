@@ -30,6 +30,16 @@ export interface PopupOpenInfo {
   infoIsland: boolean;
 }
 
+/** Settings › Info Island, as the island draws it. */
+export interface IslandLook {
+  /** % of the standard size. */
+  size: number;
+  /** % roundness of the lower corners. */
+  roundness: number;
+  speed: 'fast' | 'medium' | 'slow';
+  reduceMotion: boolean;
+}
+
 /** What the Info Island shows. `seq` numbers every message, so a late "gone" never hides a newer one. */
 export type IslandState =
   | {
@@ -43,10 +53,15 @@ export type IslandState =
       reach: DisplayReach;
       /** A display (or the simulator) has drawn it. */
       confirmed: boolean;
-      reduceMotion: boolean;
+      look: IslandLook;
     }
-  | { kind: 'message'; message: 'cleared' | 'timedOut'; reduceMotion: boolean }
+  | { kind: 'message'; message: 'cleared' | 'timedOut'; look: IslandLook }
+  /** Settings changed: redraw with the new look, nothing else. */
+  | { kind: 'look'; look: IslandLook }
   | { kind: 'hide' };
+
+/** "Show on screen" in Settings: shown, the setting is off, or a real QR is showing. */
+export type IslandPreviewResult = 'shown' | 'off' | 'busy';
 
 export interface IslandMessage {
   seq: number;
@@ -188,6 +203,8 @@ export interface CounterPayApi {
     updateConfig(patch: ConfigPatch): Promise<CounterPayConfig>;
     showAmount(amountPaise: number): Promise<SubmitResult>;
     clear(): Promise<boolean>;
+    /** Settings › Info Island › Show on screen: the island with a sample amount for a few seconds. */
+    previewIsland(): Promise<IslandPreviewResult>;
     testPattern(displayId: string): void;
     openSimulator(): void;
     regeneratePairingCode(displayId: string): Promise<string>;
@@ -269,6 +286,7 @@ export const IPC = {
   updateConfig: 'app:update-config',
   showAmount: 'app:show-amount',
   clear: 'app:clear',
+  islandPreview: 'app:island-preview',
   testPattern: 'app:test-pattern',
   openSimulator: 'app:open-simulator',
   regeneratePairing: 'app:regenerate-pairing',
